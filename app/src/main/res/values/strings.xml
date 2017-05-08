@@ -1,9 +1,7 @@
 <resources>
     <string name="app_name">MedicalDealer</string>
     <string name="app_name_short">MDealer</string>
-
-    <string name="testStr">The android:name attribute in thespecifies the Fragment class to instantiate in the layout.When the system creates this activity layout, it instantiates each fragment specified in the layout and calls the onCreateView() method for each one, to retrieve each fragments layout. The system inserts the View returned by the fragment directly in place of theelement.Note Each fragment requires a unique identifier that the system can use to restore the fragment if the activity is restarted (and which you can use to capture the fragment to perform transactions, such as remove it). There are three ways to provide an ID for a fragment:Supply the android:id attribute with a unique ID.Supply the android:tag attribute with a unique string.If you provide neither of the previous two, the system uses the ID of the container view.Or, programmatically add the fragment to an existing ViewGroup.At any time while your activity is running, you can add fragments to your activity layout. You simply need to specify a ViewGroup in which to place the fragment.To make fragment transactions in your activity (such as add, remove, or replace a fragment), you must use APIs from FragmentTransaction. You can get an instance of FragmentTransaction from your Activity like this:</string>
-    <string name="foregroundService_notification_title">notification title</string>
-    <string name="foregroundService_notification_text">notification text</string>
-    <string name="foregroundService_ticker_text">ticker text</string>
+    <string name="medical_service_notification_text">Medical Dealer Service Is Running</string>
+    
+    <string name="hospital_name_select">选择医院</string>
 </resources>

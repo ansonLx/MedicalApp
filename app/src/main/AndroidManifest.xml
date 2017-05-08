@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="anson.std.medical.dealer">
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -19,7 +22,7 @@
 
         <service
             android:name=".service.MedicalService"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="false"></service>
     </application>
 
