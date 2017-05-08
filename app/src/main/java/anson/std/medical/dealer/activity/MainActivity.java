@@ -14,6 +14,8 @@ import android.widget.TextView;
 import anson.std.medical.dealer.R;
 import anson.std.medical.dealer.service.MedicalService;
 import anson.std.medical.dealer.service.MedicalServiceBinder;
+import anson.std.medical.dealer.support.Constants;
+import anson.std.medical.dealer.support.FileUtil;
 import anson.std.medical.dealer.support.LogUtil;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,11 +35,6 @@ public class MainActivity extends AppCompatActivity {
 
         LogUtil.log(logView, "main activity onCreate");
 
-        Intent intent = getIntent();
-        if(intent != null){
-            LogUtil.log(logView, "intent is not null");
-        }
-
         Intent startServiceIntent = new Intent(this, MedicalService.class);
         startService(startServiceIntent);
 
@@ -53,8 +50,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void loadConf(){
         if(isMedicalServiceConnected){
-            LogUtil.log(logView, "call service to load conf");
-            medicalService.loadConf(logView);
+
+            // if medical data is exists
+            if(!FileUtil.isFileExists(this, Constants.medical_data_file_name)){
+                LogUtil.log(logView, "call service to load conf");
+                medicalService.loadConf(logView);
+            } else {
+//                Intent intent = new Intent(this, )
+            }
         }
     }
 

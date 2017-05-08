@@ -12,6 +12,9 @@ import android.os.Message;
 import android.os.Process;
 import android.widget.TextView;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 import anson.std.medical.dealer.R;
 import anson.std.medical.dealer.activity.MainActivity;
 import anson.std.medical.dealer.model.Medical;
@@ -70,6 +73,13 @@ public class MedicalService extends Service {
     }
 
     void doLoadConf(){
+        String medicalDataFileName = "medical_data.json";
+        FileInputStream fileInputStream;
+        try {
+            fileInputStream = openFileInput(medicalDataFileName);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         if(targetLogView != null){
             LogUtil.log(targetLogView, "do load conf");
         }
