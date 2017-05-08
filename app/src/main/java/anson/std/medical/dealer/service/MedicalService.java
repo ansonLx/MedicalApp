@@ -14,20 +14,24 @@ import android.widget.TextView;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import anson.std.medical.dealer.R;
 import anson.std.medical.dealer.activity.MainActivity;
 import anson.std.medical.dealer.model.Medical;
+import anson.std.medical.dealer.support.Constants;
+import anson.std.medical.dealer.support.FileUtil;
 import anson.std.medical.dealer.support.LogUtil;
 
 import static anson.std.medical.dealer.support.ServiceHandlerMessageType.LoadConfFile;
+import static anson.std.medical.dealer.support.ServiceHandlerMessageType.WriteConfFile;
 
 public class MedicalService extends Service {
     private static final String serviceName = "medical_service";
     private static final int notificationId = 156;
 
     private HandlerThread handlerThread;
-    private TextView targetLogView;
 
     private int lastStartId;
     private MedicalServiceHandler handler;
@@ -63,27 +67,60 @@ public class MedicalService extends Service {
         return binder;
     }
 
-    public void loadConf(TextView logView){
+    public void loadMedicalData(){
         if(medicalData == null){
-            targetLogView = logView;
             Message message = handler.obtainMessage();
             message.what = LoadConfFile.value();
             handler.sendMessage(message);
         }
     }
 
-    void doLoadConf(){
-        String medicalDataFileName = "medical_data.json";
-        FileInputStream fileInputStream;
+    public void setMedicalData(Medical medicalData){
+        this.medicalData = medicalData;
+    }
+
+    public void saveMedicalData(){
+        Message message = handler.obtainMessage();
+        message.what = WriteConfFile.value();
+        handler.sendMessage(message);
+    }
+
+    void doLoadMedicalData(){
+        FileInputStream fileInputStream = null;
         try {
-            fileInputStream = openFileInput(medicalDataFileName);
+            fileInputStream = openFileInput(Constants.medical_data_file_name);
+            medicalData = FileUtil.readFile(fileInputStream, Medical.class);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            if(fileInputStream != null){
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        if(targetLogView != null){
-            LogUtil.log(targetLogView, "do load conf");
+        updateNotification("medical data is loaded");
+    }
+
+    void doSaveMedicalData(){
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileOutputStream = openFileOutput(Constants.medical_data_file_name, MODE_PRIVATE);
+            FileUtil.flushFileByObject(fileOutputStream, medicalData);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if(fileOutputStream != null){
+                try {
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        updateNotification("do load conf");
+        updateNotification("medical data is saved");
     }
 
     @Override

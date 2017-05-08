@@ -24,9 +24,10 @@ public class MedicalServiceHandler extends Handler {
         switch (ServiceHandlerMessageType.valueOf(msg.what)){
             case LoadConfFile :
                 // // TODO: 17-5-8 load conf file
-                medicalService.doLoadConf();
+                medicalService.doLoadMedicalData();
                 break;
             case WriteConfFile:
+                medicalService.doSaveMedicalData();
                 break;
             case FixReference:
                 break;

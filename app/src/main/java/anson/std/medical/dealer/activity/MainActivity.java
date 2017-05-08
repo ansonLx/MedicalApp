@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import anson.std.medical.dealer.R;
+import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.service.MedicalService;
 import anson.std.medical.dealer.service.MedicalServiceBinder;
 import anson.std.medical.dealer.support.Constants;
@@ -52,11 +53,18 @@ public class MainActivity extends AppCompatActivity {
         if(isMedicalServiceConnected){
 
             // if medical data is exists
-            if(!FileUtil.isFileExists(this, Constants.medical_data_file_name)){
+            if(FileUtil.isFileExists(this, Constants.medical_data_file_name)){
                 LogUtil.log(logView, "call service to load conf");
-                medicalService.loadConf(logView);
+                medicalService.loadMedicalData();
             } else {
-//                Intent intent = new Intent(this, )
+
+                // create a new data file and save
+                FileUtil.createFile(this,Constants.medical_data_file_name);
+                Medical medical = new Medical();
+                medical.setUserName("anson");
+                medical.setPwd("pwd123qwe");
+                medicalService.setMedicalData(medical);
+                medicalService.saveMedicalData();
             }
         }
     }
