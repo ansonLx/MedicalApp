@@ -5,7 +5,7 @@ package anson.std.medical.dealer.support;
  */
 public enum ServiceHandlerMessageType {
 
-    LoadConfFile(0), WriteConfFile(1), FixReference(2), DoDealer(3);
+    LoadDataFile(0), WriteDataFile(1), FixReference(2), DoDealer(3);
 
     private int value;
 

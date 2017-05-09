@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="anson.std.medical.dealer">
 
-    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="18"/>
 
     <application
         android:allowBackup="true"
@@ -21,9 +21,10 @@
         </activity>
 
         <service
-            android:name=".service.MedicalService"
+            android:name=".aservice.MedicalForegroundServiceImpl"
             android:enabled="true"
             android:exported="false"></service>
+
     </application>
 
 </manifest>
