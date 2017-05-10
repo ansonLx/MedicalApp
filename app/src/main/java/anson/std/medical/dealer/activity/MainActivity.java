@@ -16,6 +16,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.view.View;
 import android.widget.TextView;
 
 import anson.std.medical.dealer.MedicalForegroundService;
@@ -24,6 +25,7 @@ import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.HandleResult;
 import anson.std.medical.dealer.aservice.MedicalForegroundServiceImpl;
 import anson.std.medical.dealer.aservice.MedicalServiceBinder;
+import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.LogUtil;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,68 +46,102 @@ public class MainActivity extends AppCompatActivity {
         logView = (TextView) findViewById(R.id.log_view);
         logView.setMovementMethod(new ScrollingMovementMethod());
 
+        if (ContextCompat.checkSelfPermission(getBaseContext(), "android.permission.READ_SMS") != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{"android.permission.READ_SMS"}, 9527);
+            System.out.println("no sms read permission");
+        }
+
         if (handler == null) {
             handler = new MedicalActivityHandler();
         }
 
-        Intent startServiceIntent = new Intent(this, MedicalForegroundServiceImpl.class);
-        medicalServiceConnection = new MedicalServiceConnection();
-        bindService(startServiceIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
+        Intent binderIntent = new Intent(this, MedicalForegroundServiceImpl.class);
+        startService(binderIntent);
 
         smsObserver = new SmsObserver(handler);
 
         // test
         registerSmsContentObserver();
 
-        querySms();
+        readSms();
+
+        System.out.println("main activity on create");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        System.out.println("main activity on start");
+
+        Intent binderIntent = new Intent(this, MedicalForegroundServiceImpl.class);
+        binderIntent.putExtra(Constants.key_service_binder_name, MainActivity.class.getSimpleName());
+        medicalServiceConnection = new MedicalServiceConnection();
+        bindService(binderIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        System.out.println("main activity on resume");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        System.out.println("main activity on pause");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        System.out.println("main activity on stop");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        System.out.println("main activity on destroy");
         unbindService(medicalServiceConnection);
         unregisterSmsContentObserver();
     }
 
-    private void querySms(){
+    public void readSms(View view) {
+        readSms();
+    }
+
+    private void readSms() {
 
         Consumer<HandleResult> consumer = new Consumer<HandleResult>() {
             @Override
             public void apply(HandleResult s) {
-                Cursor cursor = getContentResolver().query(content_sms, null, null, null, null);
-                if(cursor != null){
+                String[] projection = new String[]{"address", "body", "date", "status"};
+                Cursor cursor = getContentResolver().query(content_sms, projection, null, null, "date desc");
+                if (cursor != null) {
                     System.out.println(cursor.getCount());
-                    cursor.moveToFirst();
-//                    while (cursor.moveToNext()){
+                    while (cursor.moveToNext()) {
                         System.out.println("a message ----->");
                         String[] fields = cursor.getColumnNames();
                         for (int i = 0; i < fields.length; i++) {
                             String fieldName = fields[i];
                             String value = cursor.getString(cursor.getColumnIndex(fieldName));
                             System.out.println("\t " + fieldName + " --> " + value);
-//                        }
+                        }
                     }
                 }
             }
         };
 
-        // get unread sms
-        if(ContextCompat.checkSelfPermission(getBaseContext(), "android.permission.READ_SMS") != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{"android.permission.READ_SMS"}, 9527);
-            Message message = handler.obtainMessage();
-            message.obj = new Object[]{consumer, new HandleResult()};
-            handler.sendMessage(message);
-        } else {
-            consumer.apply(null);
-        }
+        Message message = handler.obtainMessage();
+        message.obj = new Object[]{consumer, new HandleResult()};
+        handler.sendMessage(message);
 
     }
 
-    private void registerSmsContentObserver(){
+    private void registerSmsContentObserver() {
         getContentResolver().registerContentObserver(content_sms, true, smsObserver);
     }
 
-    private void unregisterSmsContentObserver(){
+    private void unregisterSmsContentObserver() {
         getContentResolver().unregisterContentObserver(smsObserver);
     }
 
@@ -141,10 +177,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName name) {}
+        public void onServiceDisconnected(ComponentName name) {
+        }
     }
 
-    private class SmsObserver extends ContentObserver{
+    private class SmsObserver extends ContentObserver {
 
         public SmsObserver(Handler handler) {
             super(handler);
@@ -154,8 +191,7 @@ public class MainActivity extends AppCompatActivity {
         public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange, uri);
             System.out.println(uri.toString());
-
-
+            readSms();
         }
     }
 
