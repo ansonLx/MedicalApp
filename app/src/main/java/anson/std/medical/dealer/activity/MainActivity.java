@@ -48,93 +48,74 @@ public class MainActivity extends AppCompatActivity {
 
         if (ContextCompat.checkSelfPermission(getBaseContext(), "android.permission.READ_SMS") != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{"android.permission.READ_SMS"}, 9527);
-            System.out.println("no sms read permission");
+            LogUtil.log("no sms read permission");
         }
 
         if (handler == null) {
             handler = new MedicalActivityHandler();
         }
 
+        // start bg service and bind to it
+        Intent startIntent = new Intent(this, MedicalForegroundServiceImpl.class);
+        startService(startIntent);
         Intent binderIntent = new Intent(this, MedicalForegroundServiceImpl.class);
-        startService(binderIntent);
+        binderIntent.putExtra(Constants.key_service_binder_name, MainActivity.class.getSimpleName());
+        medicalServiceConnection = new MedicalServiceConnection();
+        bindService(binderIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
 
+        // register sms content change observer
         smsObserver = new SmsObserver(handler);
-
-        // test
         registerSmsContentObserver();
+        LogUtil.log("main activity on create");
 
-        readSms();
-
-        System.out.println("main activity on create");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        System.out.println("main activity on start");
-
-        Intent binderIntent = new Intent(this, MedicalForegroundServiceImpl.class);
-        binderIntent.putExtra(Constants.key_service_binder_name, MainActivity.class.getSimpleName());
-        medicalServiceConnection = new MedicalServiceConnection();
-        bindService(binderIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
+        LogUtil.log("main activity on start");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        System.out.println("main activity on resume");
+        LogUtil.log("main activity on resume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        System.out.println("main activity on pause");
+        LogUtil.log("main activity on pause");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        System.out.println("main activity on stop");
+        LogUtil.log("main activity on stop");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        System.out.println("main activity on destroy");
+        LogUtil.log("main activity on destroy");
         unbindService(medicalServiceConnection);
         unregisterSmsContentObserver();
     }
 
-    public void readSms(View view) {
-        readSms();
-    }
-
-    private void readSms() {
-
-        Consumer<HandleResult> consumer = new Consumer<HandleResult>() {
-            @Override
-            public void apply(HandleResult s) {
-                String[] projection = new String[]{"address", "body", "date", "status"};
-                Cursor cursor = getContentResolver().query(content_sms, projection, null, null, "date desc");
-                if (cursor != null) {
-                    System.out.println(cursor.getCount());
-                    while (cursor.moveToNext()) {
-                        System.out.println("a message ----->");
-                        String[] fields = cursor.getColumnNames();
-                        for (int i = 0; i < fields.length; i++) {
-                            String fieldName = fields[i];
-                            String value = cursor.getString(cursor.getColumnIndex(fieldName));
-                            System.out.println("\t " + fieldName + " --> " + value);
-                        }
-                    }
+    private void readUnread114Sms() {
+        String[] projection = new String[]{"address", "body", "date", "status"};
+        Cursor cursor = getContentResolver().query(content_sms, projection, "address='114'", null, "date desc");
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                LogUtil.log("a message ----->");
+                String[] fields = cursor.getColumnNames();
+                for (int i = 0; i < fields.length; i++) {
+                    String fieldName = fields[i];
+                    String value = cursor.getString(cursor.getColumnIndex(fieldName));
+                    System.out.println("\t " + fieldName + " --> " + value);
                 }
             }
-        };
-
-        Message message = handler.obtainMessage();
-        message.obj = new Object[]{consumer, new HandleResult()};
-        handler.sendMessage(message);
-
+        }
     }
 
     private void registerSmsContentObserver() {
@@ -167,17 +148,22 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void initMedicalData(){
+
+    }
+
     private class MedicalServiceConnection implements ServiceConnection {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            LogUtil.log(MainActivity.this, "medical service connected");
+            LogUtil.log("BG service connected");
             medicalService = ((MedicalServiceBinder) service).getMedicalService();
             loadData();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            LogUtil.logView("BG Service is disconnected...");
         }
     }
 
@@ -190,8 +176,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange, uri);
-            System.out.println(uri.toString());
-            readSms();
+            LogUtil.log(uri.toString());
+            readUnread114Sms();
         }
     }
 

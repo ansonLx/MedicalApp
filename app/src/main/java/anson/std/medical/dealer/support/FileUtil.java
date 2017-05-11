@@ -13,21 +13,25 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import anson.std.medical.dealer.MedicalApplication;
+
 /**
  * Created by anson on 17-5-8.
  */
 
 public class FileUtil {
 
-    public static File getInternalExternalDirectory(Context context) {
+    private static Context context = MedicalApplication.getMedicalApplicationContext();
+
+    public static File getInternalExternalDirectory() {
         return context.getExternalFilesDir(null);
     }
 
-    public static List<File> getSDCardExternalDirectory(Context context) {
+    public static List<File> getSDCardExternalDirectory() {
         File[] dirs = context.getExternalFilesDirs(null);
         if (dirs.length != 1) {
             List<File> sdCards = new ArrayList<>();
-            File internalFileDir = getInternalExternalDirectory(context);
+            File internalFileDir = getInternalExternalDirectory();
             for (int i = 0; i != dirs.length; i++) {
                 if (!dirs[i].getAbsolutePath().equals(internalFileDir.getAbsolutePath())) {
                     sdCards.add(dirs[i]);
@@ -40,16 +44,15 @@ public class FileUtil {
 
     /**
      * sdcard 0 > internal external store
-     * @param context
      * @return
      */
-    public static File getAppPrivateDirectory(Context context){
+    public static File getAppPrivateDirectory(){
         File appPrivateDir;
-        List<File> sdCards = FileUtil.getSDCardExternalDirectory(context);
+        List<File> sdCards = FileUtil.getSDCardExternalDirectory();
         if (sdCards != null) {
             appPrivateDir = sdCards.get(0);
         } else {
-            appPrivateDir = FileUtil.getInternalExternalDirectory(context);
+            appPrivateDir = FileUtil.getInternalExternalDirectory();
         }
         return appPrivateDir;
     }

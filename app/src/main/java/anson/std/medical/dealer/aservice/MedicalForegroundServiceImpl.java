@@ -18,6 +18,7 @@ import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.service.impl.MedicalServiceImpl;
 import anson.std.medical.dealer.support.Constants;
+import anson.std.medical.dealer.support.LogUtil;
 import anson.std.medical.dealer.support.NotificationUtil;
 import anson.std.medical.dealer.Medical114Api;
 import anson.std.medical.dealer.web.api.impl.Medical114ApiImpl;
@@ -46,12 +47,14 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
 
         binder = new MedicalServiceBinder(this);
 
-        Notification notification = NotificationUtil.generateNotification(this, "Medical Dealer BGService is create");
+        Notification notification = NotificationUtil.generateNotification("Medical Dealer BGService is running");
         startForeground(notificationId, notification);
+        LogUtil.log("foreground service is onCreate");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        LogUtil.log("foreground service is onStartCommand");
         return START_NOT_STICKY;
     }
 
@@ -60,7 +63,7 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
         String binderName = intent.getStringExtra(Constants.key_service_binder_name);
         if (binderName != null) {
             binders.add(binderName);
-            NotificationUtil.updateNotification(this, notificationId, "add binder " + binderName);
+            NotificationUtil.updateNotification(notificationId, "add binder " + binderName);
         }
         return binder;
     }
@@ -70,7 +73,7 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
         String binderName = intent.getStringExtra(Constants.key_service_binder_name);
         if (binderName != null) {
             binders.remove(binderName);
-            NotificationUtil.updateNotification(this, notificationId, "remove binder " + binderName);
+            NotificationUtil.updateNotification(notificationId, "remove binder " + binderName);
         }
         return super.onUnbind(intent);
     }
@@ -80,7 +83,8 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
         handlerThread.quitSafely();
         handler = null;
         binder = null;
-        NotificationUtil.updateNotification(this, notificationId, "foreground service is destroy");
+        NotificationUtil.updateNotification(notificationId, "foreground service is destroy");
+        LogUtil.log("foreground service is destroy");
     }
 
     @Override

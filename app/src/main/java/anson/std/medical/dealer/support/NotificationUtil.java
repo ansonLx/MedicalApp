@@ -5,8 +5,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.widget.Toast;
 
+import anson.std.medical.dealer.MedicalApplication;
 import anson.std.medical.dealer.R;
 import anson.std.medical.dealer.activity.MainActivity;
 
@@ -16,7 +16,9 @@ import anson.std.medical.dealer.activity.MainActivity;
 
 public class NotificationUtil {
 
-    public static Notification generateNotification(Context context, String title) {
+    private static Context context = MedicalApplication.getMedicalApplicationContext();
+
+    public static Notification generateNotification(String title) {
         Intent notificationIntent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
         return new Notification.Builder(context)
@@ -26,10 +28,8 @@ public class NotificationUtil {
                 .setContentIntent(pendingIntent).build();
     }
 
-    public static void updateNotification(Context context, int notificationId, String title) {
+    public static void updateNotification(int notificationId, String title) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        System.out.println(title);
-        Toast.makeText(context, title, Toast.LENGTH_LONG).show();
-        notificationManager.notify(notificationId, generateNotification(context, title));
+        notificationManager.notify(notificationId, generateNotification(title));
     }
 }

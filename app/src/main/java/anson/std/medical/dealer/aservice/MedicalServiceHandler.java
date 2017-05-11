@@ -35,7 +35,6 @@ public class MedicalServiceHandler extends Handler {
             case LoadDataFile: {
                 Consumer<HandleResult> callback = (Consumer<HandleResult>) msg.obj;
                 medicalService.loadMedicalData(callback);
-                NotificationUtil.updateNotification(context, notificationId, "BGService load data finish");
                 break;
             }
             case WriteDataFile: {
@@ -43,7 +42,6 @@ public class MedicalServiceHandler extends Handler {
                 Consumer<HandleResult> callback = (Consumer<HandleResult>) os[1];
                 Medical medical = (Medical) os[0];
                 medicalService.saveMedicalData(medical, callback);
-                NotificationUtil.updateNotification(context, notificationId, "BGService save data finish");
                 break;
             }
             case FixReference:

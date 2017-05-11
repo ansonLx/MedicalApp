@@ -25,6 +25,7 @@ import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.model.Patient;
 import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.FileUtil;
+import anson.std.medical.dealer.support.LogUtil;
 
 /**
  * Created by anson on 17-5-9.
@@ -51,19 +52,24 @@ public class MedicalServiceImpl implements MedicalService {
     @Override
     public void loadMedicalData(Consumer<HandleResult> callback) {
         if (medical == null) {
-            File appPrivateDir = FileUtil.getAppPrivateDirectory(context);
+            File appPrivateDir = FileUtil.getAppPrivateDirectory();
             File medicalFile = new File(appPrivateDir, Constants.medical_data_file_name);
             if (medicalFile.exists() && medicalFile.isFile()) {
                 medical = FileUtil.readFile(medicalFile, Medical.class);
+                LogUtil.log("load medical data from file success");
             } else {
+                LogUtil.log("no medical data file found, will generate new one");
                 medicalFile = FileUtil.createFile(appPrivateDir, Constants.medical_data_file_name);
                 medical = new Medical();
                 medical.setUserName("18600397835");
                 medical.setPwd("51200468q");
                 encryptModel(medical);
                 FileUtil.flushFileByObject(medicalFile, medical);
+                LogUtil.log("write medical data to file success");
             }
             deEncryptModel(medical);
+        } else {
+            LogUtil.log("medical data has been loaded, need not to reload it");
         }
 
         HandleResult handleResult = new HandleResult();
@@ -76,12 +82,15 @@ public class MedicalServiceImpl implements MedicalService {
     @Override
     public void saveMedicalData(Medical medical, Consumer<HandleResult> callback) {
         if(medical != null){
-            File appPrivateDir = FileUtil.getAppPrivateDirectory(context);
+            File appPrivateDir = FileUtil.getAppPrivateDirectory();
             File medicalFile = new File(appPrivateDir, Constants.medical_data_file_name);
             encryptModel(medical);
             FileUtil.flushFileByObject(medicalFile, medical);
             deEncryptModel(medical);
             this.medical = medical;
+            LogUtil.log("write medical data to file success");
+        } else {
+            LogUtil.log("medical is null, nothing will write to file");
         }
     }
 

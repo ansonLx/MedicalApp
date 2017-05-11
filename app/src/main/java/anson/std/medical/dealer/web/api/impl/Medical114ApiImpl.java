@@ -7,4 +7,5 @@ import anson.std.medical.dealer.Medical114Api;
  */
 
 public class Medical114ApiImpl implements Medical114Api {
+
 }
