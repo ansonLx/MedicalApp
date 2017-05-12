@@ -1,6 +1,9 @@
 package anson.std.medical.dealer;
 
+import java.util.List;
+
 import anson.std.medical.dealer.model.Medical;
+import anson.std.medical.dealer.model.MedicalResource;
 
 /**
  * Created by anson on 17-5-9.
@@ -11,6 +14,7 @@ public class HandleResult {
     private boolean occurError;
     private String message;
     private Medical medical;
+    private List<MedicalResource> resourceList;
 
     public boolean isOccurError() {
         return occurError;
@@ -34,5 +38,13 @@ public class HandleResult {
 
     public void setMedical(Medical medical) {
         this.medical = medical;
+    }
+
+    public List<MedicalResource> getResourceList() {
+        return resourceList;
+    }
+
+    public void setResourceList(List<MedicalResource> resourceList) {
+        this.resourceList = resourceList;
     }
 }

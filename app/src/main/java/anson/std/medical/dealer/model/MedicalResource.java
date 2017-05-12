@@ -12,6 +12,10 @@ public class MedicalResource {
     private String date;
     private Boolean amPm;
     private Patient patient;
+    private int remainAvailableNumber;
+    private String verifyCode;
+    private String skill;
+    private long dutySourceId;
 
     public String getHospitalId() {
         return hospitalId;
@@ -59,5 +63,37 @@ public class MedicalResource {
 
     public void setPatient(Patient patient) {
         this.patient = patient;
+    }
+
+    public int getRemainAvailableNumber() {
+        return remainAvailableNumber;
+    }
+
+    public void setRemainAvailableNumber(int remainAvailableNumber) {
+        this.remainAvailableNumber = remainAvailableNumber;
+    }
+
+    public String getVerifyCode() {
+        return verifyCode;
+    }
+
+    public void setVerifyCode(String verifyCode) {
+        this.verifyCode = verifyCode;
+    }
+
+    public String getSkill() {
+        return skill;
+    }
+
+    public void setSkill(String skill) {
+        this.skill = skill;
+    }
+
+    public long getDutySourceId() {
+        return dutySourceId;
+    }
+
+    public void setDutySourceId(long dutySourceId) {
+        this.dutySourceId = dutySourceId;
     }
 }

@@ -19,12 +19,16 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.List;
+
 import anson.std.medical.dealer.MedicalForegroundService;
+import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.R;
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.HandleResult;
 import anson.std.medical.dealer.aservice.MedicalForegroundServiceImpl;
 import anson.std.medical.dealer.aservice.MedicalServiceBinder;
+import anson.std.medical.dealer.model.MedicalResource;
 import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.LogUtil;
 
@@ -102,22 +106,6 @@ public class MainActivity extends AppCompatActivity {
         unregisterSmsContentObserver();
     }
 
-    private void readUnread114Sms() {
-        String[] projection = new String[]{"address", "body", "date", "status"};
-        Cursor cursor = getContentResolver().query(content_sms, projection, "address='114'", null, "date desc");
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                LogUtil.log("a message ----->");
-                String[] fields = cursor.getColumnNames();
-                for (int i = 0; i < fields.length; i++) {
-                    String fieldName = fields[i];
-                    String value = cursor.getString(cursor.getColumnIndex(fieldName));
-                    System.out.println("\t " + fieldName + " --> " + value);
-                }
-            }
-        }
-    }
-
     private void registerSmsContentObserver() {
         getContentResolver().registerContentObserver(content_sms, true, smsObserver);
     }
@@ -138,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void apply(HandleResult handleResult) {
-//                        logHandleResult(handleResult);
+                        initMedicalData(handleResult);
                     }
                 };
                 os[1] = handleResult;
@@ -148,8 +136,39 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void initMedicalData(){
+    private void readUnread114Sms() {
+        String[] projection = new String[]{"address", "body", "date", "status"};
+        Cursor cursor = getContentResolver().query(content_sms, projection, "address='114'", null, "date desc");
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                LogUtil.log("a message ----->");
+                String[] fields = cursor.getColumnNames();
+                for (int i = 0; i < fields.length; i++) {
+                    String fieldName = fields[i];
+                    String value = cursor.getString(cursor.getColumnIndex(fieldName));
+                    System.out.println("\t " + fieldName + " --> " + value);
+                }
+            }
+        }
+    }
 
+    private void initMedicalData(HandleResult handleResult){
+        if(!handleResult.isOccurError()){
+            medicalService.login114();
+        }
+    }
+
+    public void httpTest(View view){
+        medicalService.listMedicalResource("142", "200039608", "2017-05-16", false, new Consumer<HandleResult>() {
+            @Override
+            public void apply(HandleResult handleResult) {
+                List<MedicalResource> list = handleResult.getResourceList();
+                for (MedicalResource resource : list){
+                    System.out.println(resource.getRemainAvailableNumber());
+                }
+
+            }
+        });
     }
 
     private class MedicalServiceConnection implements ServiceConnection {

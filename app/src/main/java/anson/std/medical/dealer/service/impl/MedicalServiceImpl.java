@@ -22,6 +22,7 @@ import anson.std.medical.dealer.HandleResult;
 import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.Medical114Api;
 import anson.std.medical.dealer.model.Medical;
+import anson.std.medical.dealer.model.MedicalResource;
 import anson.std.medical.dealer.model.Patient;
 import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.FileUtil;
@@ -81,7 +82,7 @@ public class MedicalServiceImpl implements MedicalService {
 
     @Override
     public void saveMedicalData(Medical medical, Consumer<HandleResult> callback) {
-        if(medical != null){
+        if (medical != null) {
             File appPrivateDir = FileUtil.getAppPrivateDirectory();
             File medicalFile = new File(appPrivateDir, Constants.medical_data_file_name);
             encryptModel(medical);
@@ -95,6 +96,23 @@ public class MedicalServiceImpl implements MedicalService {
     }
 
     @Override
+    public void login114() {
+        boolean loginFlag = medical114Api.login(medical.getUserName(), medical.getPwd());
+        if (loginFlag) {
+            LogUtil.logView("114 login success");
+        } else {
+            LogUtil.logView("114 login failed");
+        }
+    }
+
+    @Override
+    public void listMedicalResource(String hospitalId, String departmentId, String date, Boolean amPm, Consumer<HandleResult> callback) {
+        List<MedicalResource> medicalResources = medical114Api.getMedicalResources(hospitalId, departmentId, date, amPm);
+        HandleResult handleResult = new HandleResult();
+        handleResult.setResourceList(medicalResources);
+        callback.apply(handleResult);
+    }
+
     public void encryptModel(Medical medical) {
         if (medical != null) {
             String pwd = medical.getPwd();
@@ -111,7 +129,6 @@ public class MedicalServiceImpl implements MedicalService {
         }
     }
 
-    @Override
     public void deEncryptModel(Medical medical) {
         if (medical != null) {
             String pwd = medical.getPwd();

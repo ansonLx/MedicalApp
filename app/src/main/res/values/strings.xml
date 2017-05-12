@@ -3,5 +3,8 @@
     <string name="app_name_short">MDealer</string>
     <string name="medical_service_notification_text">Medical Dealer Service Is Running</string>
     
-    <string name="hospital_name_select">选择医院</string>
+    <string name="select_hospital">选择医院</string>
+    <string name="select_contact">选择用户</string>
+    <string name="create_contact"></string>
+    <string name="create_hospital">创建医院</string>
 </resources>

@@ -9,7 +9,6 @@ import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.HandleResult;
 import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.model.Medical;
-import anson.std.medical.dealer.support.NotificationUtil;
 import anson.std.medical.dealer.support.ServiceHandlerMessageType;
 
 /**
@@ -44,10 +43,20 @@ public class MedicalServiceHandler extends Handler {
                 medicalService.saveMedicalData(medical, callback);
                 break;
             }
-            case FixReference:
+            case Login114:{
+                medicalService.login114();
                 break;
-            case DoDealer:
+            }
+            case ListMedicalResource:{
+                Object[] os = (Object[]) msg.obj;
+                String hospitalId = (String) os[0];
+                String departmentId = (String) os[1];
+                String date = (String) os[2];
+                boolean amPm = (boolean) os[3];
+                Consumer<HandleResult> callback = (Consumer<HandleResult>) os[4];
+                medicalService.listMedicalResource(hospitalId, departmentId,date,amPm,callback);
                 break;
+            }
             default:
                 break;
         }

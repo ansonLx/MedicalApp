@@ -5,21 +5,15 @@ package anson.std.medical.dealer.support;
  */
 public enum ServiceHandlerMessageType {
 
-    LoadDataFile(0), WriteDataFile(1), FixReference(2), DoDealer(3);
-
-    private int value;
-
-    ServiceHandlerMessageType(int value) {
-        this.value = value;
-    }
-
-    public int value(){
-        return this.value;
-    }
+    LoadDataFile,
+    WriteDataFile,
+    CommitTheDealer,
+    Login114,
+    ListMedicalResource;
 
     public static ServiceHandlerMessageType valueOf(int value) {
         for (ServiceHandlerMessageType t : values()) {
-            if (t.value == value) {
+            if (t.ordinal() == value) {
                 return t;
             }
         }

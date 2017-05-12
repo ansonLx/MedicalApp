@@ -11,4 +11,8 @@ public interface MedicalForegroundService {
     void loadMedicalData(Consumer<HandleResult> callback);
 
     void saveMedicalData(Medical medical, Consumer<HandleResult> callback);
+
+    void login114();
+
+    void listMedicalResource(String hospitalId, String departmentId, String date, boolean amPm, Consumer<HandleResult> callback);
 }

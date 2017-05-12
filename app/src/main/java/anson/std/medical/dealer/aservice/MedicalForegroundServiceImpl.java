@@ -23,7 +23,9 @@ import anson.std.medical.dealer.support.NotificationUtil;
 import anson.std.medical.dealer.Medical114Api;
 import anson.std.medical.dealer.web.api.impl.Medical114ApiImpl;
 
+import static anson.std.medical.dealer.support.ServiceHandlerMessageType.ListMedicalResource;
 import static anson.std.medical.dealer.support.ServiceHandlerMessageType.LoadDataFile;
+import static anson.std.medical.dealer.support.ServiceHandlerMessageType.Login114;
 import static anson.std.medical.dealer.support.ServiceHandlerMessageType.WriteDataFile;
 
 public class MedicalForegroundServiceImpl extends Service implements MedicalForegroundService {
@@ -90,7 +92,7 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
     @Override
     public void loadMedicalData(Consumer<HandleResult> callback) {
         Message message = handler.obtainMessage();
-        message.what = LoadDataFile.value();
+        message.what = LoadDataFile.ordinal();
         message.obj = callback;
         handler.sendMessage(message);
     }
@@ -98,8 +100,23 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
     @Override
     public void saveMedicalData(Medical medical, Consumer<HandleResult> callback) {
         Message message = handler.obtainMessage();
-        message.what = WriteDataFile.value();
+        message.what = WriteDataFile.ordinal();
         message.obj = new Object[]{medical, callback};
+        handler.sendMessage(message);
+    }
+
+    @Override
+    public void login114() {
+        Message message = handler.obtainMessage();
+        message.what = Login114.ordinal();
+        handler.sendMessage(message);
+    }
+
+    @Override
+    public void listMedicalResource(String hospitalId, String departmentId, String date, boolean amPm, Consumer<HandleResult> callback) {
+        Message message = handler.obtainMessage();
+        message.what = ListMedicalResource.ordinal();
+        message.obj = new Object[]{hospitalId, departmentId, date, amPm, callback};
         handler.sendMessage(message);
     }
 }
