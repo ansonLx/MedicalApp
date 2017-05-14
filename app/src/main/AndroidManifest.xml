@@ -2,9 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="anson.std.medical.dealer">
 
-    <uses-permission android:name="android.permission.READ_SMS"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="18"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="18" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".MedicalApplication"
@@ -25,8 +27,26 @@
         <service
             android:name=".aservice.MedicalForegroundServiceImpl"
             android:enabled="true"
-            android:exported="false"></service>
+            android:exported="false" />
 
+        <activity
+            android:name=".activity.ContactListActivity"
+            android:parentActivityName=".activity.MainActivity" />
+        <activity
+            android:name=".activity.ContactActivity"
+            android:parentActivityName=".activity.ContactListActivity" />
+        <activity android:name=".activity.HospitalListActivity"
+            android:parentActivityName=".activity.MainActivity"/>
+        <activity android:name=".activity.DepartmentListActivity"
+            android:parentActivityName=".activity.HospitalListActivity"/>
+        <activity android:name=".activity.DoctorListActivity"
+            android:parentActivityName=".activity.DepartmentListActivity"/>
+        <activity android:name=".activity.HospitalActivity"
+            android:parentActivityName=".activity.HospitalListActivity"/>
+        <activity android:name=".activity.DoctorActivity"
+            android:parentActivityName=".activity.DoctorListActivity"/>
+        <activity android:name=".activity.DepartmentActivity"
+            android:parentActivityName=".activity.DepartmentListActivity"></activity>
     </application>
 
 </manifest>

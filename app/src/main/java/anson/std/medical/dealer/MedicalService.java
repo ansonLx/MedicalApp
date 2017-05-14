@@ -11,9 +11,15 @@ import anson.std.medical.dealer.model.MedicalResource;
 
 public interface MedicalService {
 
+    boolean isDataLoaded();
+
     void loadMedicalData(Consumer<HandleResult> callback);
 
     void saveMedicalData(Medical medical, Consumer<HandleResult> callback);
+
+    Medical getMedicalData();
+
+    boolean isLogin114();
 
     void login114();
 

@@ -1,4 +1,4 @@
-package anson.std.medical.dealer.activity;
+package anson.std.medical.dealer.activity.support;
 
 import android.os.Handler;
 import android.os.Message;

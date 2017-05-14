@@ -9,7 +9,9 @@ import android.os.Message;
 import android.os.Process;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.MedicalForegroundService;
@@ -34,9 +36,11 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
 
     private static MedicalServiceHandler handler;
     private static HandlerThread handlerThread;
-    private static List<String> binders = new ArrayList<>();
+
+    private Map<String, String> tempMap;
 
     private MedicalServiceBinder binder;
+    private MedicalService medicalService;
 
     @Override
     public void onCreate() {
@@ -44,10 +48,12 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
         handlerThread.start();
 
         Medical114Api medical114Api = new Medical114ApiImpl();
-        MedicalService medicalService = new MedicalServiceImpl(this, medical114Api);
+        medicalService = new MedicalServiceImpl(this, medical114Api);
         handler = new MedicalServiceHandler(this, medicalService, notificationId, handlerThread.getLooper());
 
         binder = new MedicalServiceBinder(this);
+
+        tempMap = new HashMap<>();
 
         Notification notification = NotificationUtil.generateNotification("Medical Dealer BGService is running");
         startForeground(notificationId, notification);
@@ -62,21 +68,11 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
 
     @Override
     public IBinder onBind(Intent intent) {
-        String binderName = intent.getStringExtra(Constants.key_service_binder_name);
-        if (binderName != null) {
-            binders.add(binderName);
-            NotificationUtil.updateNotification(notificationId, "add binder " + binderName);
-        }
         return binder;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        String binderName = intent.getStringExtra(Constants.key_service_binder_name);
-        if (binderName != null) {
-            binders.remove(binderName);
-            NotificationUtil.updateNotification(notificationId, "remove binder " + binderName);
-        }
         return super.onUnbind(intent);
     }
 
@@ -91,10 +87,19 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
 
     @Override
     public void loadMedicalData(Consumer<HandleResult> callback) {
-        Message message = handler.obtainMessage();
-        message.what = LoadDataFile.ordinal();
-        message.obj = callback;
-        handler.sendMessage(message);
+        if (!medicalService.isDataLoaded()) {
+            Message message = handler.obtainMessage();
+            message.what = LoadDataFile.ordinal();
+            message.obj = callback;
+            handler.sendMessage(message);
+        } else {
+            Medical medicalData = medicalService.getMedicalData();
+            HandleResult handleResult = new HandleResult();
+            handleResult.setOccurError(false);
+            handleResult.setMessage("data load success");
+            handleResult.setMedical(medicalData);
+            callback.apply(handleResult);
+        }
     }
 
     @Override
@@ -106,10 +111,32 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
     }
 
     @Override
+    public void setTemp(String key, String tempValue) {
+        tempMap.put(key, tempValue);
+    }
+
+    @Override
+    public String getTemp(String key) {
+        return tempMap.get(key);
+    }
+
+    @Override
+    public void clearTemp() {
+        tempMap.clear();
+    }
+
+    @Override
+    public Medical getMedicalData() {
+        return medicalService.getMedicalData();
+    }
+
+    @Override
     public void login114() {
-        Message message = handler.obtainMessage();
-        message.what = Login114.ordinal();
-        handler.sendMessage(message);
+        if (!medicalService.isLogin114()) {
+            Message message = handler.obtainMessage();
+            message.what = Login114.ordinal();
+            handler.sendMessage(message);
+        }
     }
 
     @Override

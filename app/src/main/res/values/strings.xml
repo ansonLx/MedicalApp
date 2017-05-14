@@ -2,9 +2,42 @@
     <string name="app_name">MedicalDealer</string>
     <string name="app_name_short">MDealer</string>
     <string name="medical_service_notification_text">Medical Dealer Service Is Running</string>
-    
-    <string name="select_hospital">选择医院</string>
+
+    <string name="select_confirm">确认选择</string>
+    <string name="edit_btn">修改</string>
+
+    <!-- main -->
+    <string name="select_hospital">选择医生</string>
     <string name="select_contact">选择用户</string>
-    <string name="create_contact"></string>
+    <string name="info_view_text">未选择</string>
+
+    <!-- hospital -->
     <string name="create_hospital">创建医院</string>
+    <string name="hospital_name">医院名称</string>
+    <string name="hospital_Id">医院标识</string>
+    <string name="hospital_save">创建医院</string>
+    <string name="hospital_save_edit">保存医院</string>
+
+    <!-- department -->
+    <string name="create_department">创建科室</string>
+    <string name="department_name">科室名称</string>
+    <string name="department_id">科室标识</string>
+    <string name="department_save">创建科室</string>
+    <string name="department_save_edit">保存科室</string>
+
+    <!-- contact -->
+    <string name="create_contact">创建用户</string>
+    <string name="edit_contact">保存用户</string>
+    <string name="create_contact_name">用户名称</string>
+    <string name="create_contact_id">用户标识</string>
+    <string name="create_contact_hospitalCard">就诊卡</string>
+    <string name="create_contact_medicareCard">医疗卡</string>
+
+    <!-- doctor -->
+    <string name="create_doctor">创建医生</string>
+    <string name="doctor_name">医生名称</string>
+    <string name="doctor_id">医生标识</string>
+    <string name="doctor_title">职称</string>
+    <string name="doctor_skill">特长</string>
+
 </resources>

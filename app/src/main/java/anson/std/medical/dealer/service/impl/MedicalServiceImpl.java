@@ -39,10 +39,15 @@ public class MedicalServiceImpl implements MedicalService {
 
     private Medical114Api medical114Api;
     private Medical medical;
+    private boolean isLogin;
 
     public MedicalServiceImpl(Context context, Medical114Api medical114Api) {
         this.context = context;
         this.medical114Api = medical114Api;
+    }
+
+    public boolean isDataLoaded(){
+        return medical != null;
     }
 
     /**
@@ -89,19 +94,33 @@ public class MedicalServiceImpl implements MedicalService {
             FileUtil.flushFileByObject(medicalFile, medical);
             deEncryptModel(medical);
             this.medical = medical;
-            LogUtil.log("write medical data to file success");
+            LogUtil.logView("write medical data to file success");
         } else {
-            LogUtil.log("medical is null, nothing will write to file");
+            LogUtil.logView("medical is null, nothing will write to file");
         }
     }
 
     @Override
+    public Medical getMedicalData() {
+        return medical;
+    }
+
+    @Override
+    public boolean isLogin114(){
+        return isLogin;
+    }
+
+    @Override
     public void login114() {
-        boolean loginFlag = medical114Api.login(medical.getUserName(), medical.getPwd());
-        if (loginFlag) {
-            LogUtil.logView("114 login success");
+        if(!isLogin){
+            isLogin = medical114Api.login(medical.getUserName(), medical.getPwd());
+            if (isLogin) {
+                LogUtil.logView("114 login success");
+            } else {
+                LogUtil.logView("114 login failed");
+            }
         } else {
-            LogUtil.logView("114 login failed");
+            LogUtil.logView("114 has already login");
         }
     }
 
