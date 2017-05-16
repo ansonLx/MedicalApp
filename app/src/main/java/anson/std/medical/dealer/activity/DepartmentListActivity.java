@@ -15,11 +15,13 @@ import java.util.List;
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.MedicalForegroundService;
 import anson.std.medical.dealer.R;
+import anson.std.medical.dealer.activity.support.MedicalConfirmDialog;
 import anson.std.medical.dealer.activity.support.MedicalListViewArrayAdapter;
 import anson.std.medical.dealer.activity.support.MedicalServiceConnection;
 import anson.std.medical.dealer.aservice.MedicalForegroundServiceImpl;
 import anson.std.medical.dealer.model.Department;
 import anson.std.medical.dealer.model.Hospital;
+import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.support.Constants;
 
 public class DepartmentListActivity extends AppCompatActivity {
@@ -32,6 +34,7 @@ public class DepartmentListActivity extends AppCompatActivity {
     private MedicalForegroundService medicalForegroundService;
     private MedicalServiceConnection medicalServiceConnection;
     private MedicalListViewArrayAdapter<Department> departmentMedicalListViewArrayAdapter;
+    private MedicalConfirmDialog<Department> delConfirmDialog;
 
     private String selectedHospitalId;
     private Method getDepartmentNameMethod;
@@ -52,6 +55,7 @@ public class DepartmentListActivity extends AppCompatActivity {
         context = this;
         departmentListView = (ListView) findViewById(R.id.department_list_view);
         nameView = (TextView) findViewById(R.id.department_name_view);
+        delConfirmDialog = new MedicalConfirmDialog<>(context);
 
         medicalServiceConnection = new MedicalServiceConnection(new Consumer<MedicalForegroundService>() {
             @Override
@@ -96,6 +100,42 @@ public class DepartmentListActivity extends AppCompatActivity {
                     Intent intent = new Intent(context, DepartmentActivity.class);
                     intent.putExtra(Constants.key_intent_department_id, department.getId());
                     startActivity(intent);
+                }
+            }, new Consumer<Department>() {
+                @Override
+                public void apply(Department department) {
+                    delConfirmDialog.openConfirmDialog(getString(R.string.del_message), department, new Consumer<Department>() {
+                        @Override
+                        public void apply(Department delDepartment) {
+                            Medical medical = medicalForegroundService.getMedicalData();
+                            List<Hospital> hospitals = medical.getHospitalList();
+                            Hospital hospital1 = null;
+                            for(Hospital h : hospitals){
+                                if(h.getId().equals(selectedHospitalId)){
+                                    hospital1 = h;
+                                    break;
+                                }
+                            }
+                            if(hospital1 != null){
+                                List<Department> departments = hospital1.getDepartmentList();
+                                int index = -1;
+                                for(Department d : departments){
+                                    if(d.getId().equals(delDepartment.getId())){
+                                        index = departments.indexOf(d);
+                                        break;
+                                    }
+                                }
+                                if(index != -1){
+                                    departments.remove(index);
+                                    nameView.setText("");
+                                    medicalForegroundService.saveMedicalData(medical, null);
+                                    medicalForegroundService.clearTemp(false);
+                                    medicalForegroundService.setTemp(Constants.key_intent_selected_hospital_id, selectedHospitalId);
+                                    departmentMedicalListViewArrayAdapter.flushData(departments);
+                                }
+                            }
+                        }
+                    });
                 }
             });
             departmentListView.setAdapter(departmentMedicalListViewArrayAdapter);

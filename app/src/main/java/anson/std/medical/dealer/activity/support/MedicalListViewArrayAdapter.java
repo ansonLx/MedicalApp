@@ -29,29 +29,47 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
     private Method getShowNameMethod;
     private int checkedColor;
     private Consumer<T> editCallback;
+    private Consumer<T> delCallback;
 
-    public MedicalListViewArrayAdapter(Context context, List<T> dataList, Method getShowNameMethod, Consumer<T> editCallback) {
+    public MedicalListViewArrayAdapter(Context context, List<T> dataList, Method getShowNameMethod, Consumer<T> editCallback, Consumer<T> delCallback) {
         super(context, R.layout.array_list_view_layout);
         this.resource = R.layout.array_list_view_layout;
         this.context = context;
         this.dataList = new ArrayList<>();
-        for (T data : dataList) {
-            DataOnItem dataOnItem = new DataOnItem();
-            dataOnItem.data = data;
-            this.dataList.add(dataOnItem);
+        if (dataList != null) {
+            for (T data : dataList) {
+                DataOnItem dataOnItem = new DataOnItem();
+                dataOnItem.data = data;
+                this.dataList.add(dataOnItem);
+            }
         }
         this.getShowNameMethod = getShowNameMethod;
         this.checkedColor = context.getResources().getColor(R.color.colorAccent, null);
         this.editCallback = editCallback;
+        this.delCallback = delCallback;
+    }
+
+    public void flushData(List<T> dataList) {
+        this.dataList.clear();
+        if (dataList != null && !dataList.isEmpty()) {
+            for (T data : dataList) {
+                DataOnItem dataOnItem = new DataOnItem();
+                dataOnItem.data = data;
+                this.dataList.add(dataOnItem);
+            }
+        }
+        notifyDataSetChanged();
     }
 
     @Override
     public int getCount() {
+        System.out.println("call get count");
         return dataList.size();
     }
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
+        System.out.println("call get view");
         final DataOnItem itemData = dataList.get(position);
         itemData.position = position;
         if (convertView == null) {
@@ -71,13 +89,25 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        Button button = (Button) convertView.findViewById(R.id.contact_edit_btn);
-        button.setOnClickListener(new View.OnClickListener() {
+        Button editBtn = (Button) convertView.findViewById(R.id.edit_btn);
+        editBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                editCallback.apply(itemData.data);
+                if (editCallback != null) {
+                    editCallback.apply(itemData.data);
+                }
             }
         });
+        final Button delBtn = (Button) convertView.findViewById(R.id.del_btn);
+        delBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (delCallback != null) {
+                    delCallback.apply(itemData.data);
+                }
+            }
+        });
+
         convertView.setTag(itemData);
 
         return convertView;
@@ -110,9 +140,9 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
         return checkedName;
     }
 
-    public T getSelectedItem(){
+    public T getSelectedItem() {
         for (DataOnItem data : dataList) {
-            if(data.isCheck){
+            if (data.isCheck) {
                 return data.data;
             }
         }

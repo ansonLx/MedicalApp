@@ -1,27 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/contact_edit_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
+        android:id="@+id/edit_btn"
+        android:layout_width="60dp"
+        android:layout_height="40dp"
         android:layout_alignParentTop="true"
-        android:layout_marginEnd="30dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="0dp"
+        android:layout_toStartOf="@+id/del_btn"
         android:focusable="false"
-        android:text="@string/edit_btn" />
+        android:text="@string/edit_btn"
+        android:textSize="12sp"
+        app:layout_constraintRight_toLeftOf="@+id/del_btn"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/contact_name_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TextView"
-        android:layout_alignBaseline="@+id/contact_edit_btn"
-        android:layout_alignBottom="@+id/contact_edit_btn"
+        android:layout_alignBaseline="@+id/edit_btn"
+        android:layout_alignBottom="@+id/edit_btn"
         android:layout_alignParentStart="true"
-        android:layout_marginStart="30dp" />
+        android:layout_marginStart="30dp"
+        android:layout_marginLeft="30dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBaseline_toBaselineOf="@+id/edit_btn" />
+
+    <Button
+        android:id="@+id/del_btn"
+        android:layout_width="60dp"
+        android:layout_height="40dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="0dp"
+        android:focusable="false"
+        android:text="@string/del_btn"
+        android:textSize="12sp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>

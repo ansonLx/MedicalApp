@@ -7,24 +7,26 @@
     tools:context="anson.std.medical.dealer.activity.DoctorListActivity">
 
     <Button
+        android:id="@+id/button8"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/create_doctor"
-        app:layout_constraintTop_toTopOf="parent"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="16dp"
+        android:onClick="createDoctor"
+        android:text="@string/create_doctor"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:id="@+id/button8" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
+        android:id="@+id/button9"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/select_confirm"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="16dp"
-        app:layout_constraintLeft_toRightOf="@+id/button8"
         android:layout_marginLeft="16dp"
-        android:id="@+id/button9" />
+        android:layout_marginTop="16dp"
+        android:onClick="selectDoctor"
+        android:text="@string/select_confirm"
+        app:layout_constraintLeft_toRightOf="@+id/button8"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ListView
         android:id="@+id/doctor_list_view"
@@ -41,7 +43,7 @@
         app:layout_constraintTop_toBottomOf="@+id/button9" />
 
     <TextView
-        android:id="@+id/doctor_name_view"
+        android:id="@+id/doctor_name_input"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toRightOf="@+id/button9"

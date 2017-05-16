@@ -1,15 +1,12 @@
 package anson.std.medical.dealer.activity;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -25,12 +22,17 @@ import anson.std.medical.dealer.MedicalForegroundService;
 import anson.std.medical.dealer.R;
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.HandleResult;
+import anson.std.medical.dealer.activity.support.DatePicker;
 import anson.std.medical.dealer.activity.support.MedicalActivityHandler;
 import anson.std.medical.dealer.activity.support.MedicalServiceConnection;
 import anson.std.medical.dealer.aservice.MedicalForegroundServiceImpl;
+import anson.std.medical.dealer.model.Department;
+import anson.std.medical.dealer.model.Doctor;
+import anson.std.medical.dealer.model.Hospital;
 import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.model.MedicalResource;
 import anson.std.medical.dealer.model.Patient;
+import anson.std.medical.dealer.model.TargetDate;
 import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.LogUtil;
 
@@ -40,47 +42,38 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView logView;
     private TextView patientView;
+    private TextView doctorView;
+    private TextView dateView;
     private static MedicalActivityHandler handler;
 
     private MedicalForegroundService medicalService;
     private MedicalServiceConnection medicalServiceConnection;
     private SmsObserver smsObserver;
+    private DatePicker datePicker;
 
     private String patientId;
     private String doctorId;
+    private TargetDate targetDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        initAndroidPermissions();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        logView = (TextView) findViewById(R.id.log_view);
-        logView.setMovementMethod(new ScrollingMovementMethod());
-        patientView = (TextView) findViewById(R.id.patient_view);
+        initComponents();
+        initDatePicker();
+        registerSmsContentChangeObserver();
 
-        if (ContextCompat.checkSelfPermission(getBaseContext(), "android.permission.READ_SMS") != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{"android.permission.READ_SMS"}, 9527);
-            LogUtil.log("no sms read permission");
-        }
-
+        // handler
         if (handler == null) {
             handler = new MedicalActivityHandler();
-        }
-
-        Intent startIntent = getIntent();
-        if (startIntent != null) {
-            if (startIntent.hasExtra(Constants.key_intent_contact_id)) {
-                patientId = startIntent.getStringExtra(Constants.key_intent_contact_id);
-            }
-            if(startIntent.hasExtra(Constants.key_intent_selected_doctor_id)){
-                doctorId = startIntent.getStringExtra(Constants.key_intent_selected_doctor_id);
-            }
         }
 
         // start bg service and bind to it
         Intent startServiceIntent = new Intent(this, MedicalForegroundServiceImpl.class);
         startService(startServiceIntent);
         Intent bindIntent = new Intent(this, MedicalForegroundServiceImpl.class);
-        medicalServiceConnection = new MedicalServiceConnection(new Consumer<MedicalForegroundService>(){
+        medicalServiceConnection = new MedicalServiceConnection(new Consumer<MedicalForegroundService>() {
             @Override
             public void apply(MedicalForegroundService medicalForegroundService) {
                 medicalService = medicalForegroundService;
@@ -89,9 +82,6 @@ public class MainActivity extends AppCompatActivity {
         });
         bindService(bindIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
 
-        // register sms content change observer
-        smsObserver = new SmsObserver(handler);
-        registerSmsContentObserver();
         LogUtil.log("main activity on create");
 
     }
@@ -99,41 +89,28 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        LogUtil.log("main activity on start");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        LogUtil.log("main activity on resume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        LogUtil.log("main activity on pause");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        LogUtil.log("main activity on stop");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        LogUtil.log("main activity on destroy");
         unbindService(medicalServiceConnection);
         unregisterSmsContentObserver();
-    }
-
-    private void registerSmsContentObserver() {
-        getContentResolver().registerContentObserver(content_sms, true, smsObserver);
-    }
-
-    private void unregisterSmsContentObserver() {
-        getContentResolver().unregisterContentObserver(smsObserver);
     }
 
     public void toSelectContact(View view) {
@@ -141,9 +118,53 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void toSelectDoctor(View view){
+    public void toSelectDoctor(View view) {
         Intent intent = new Intent(this, HospitalListActivity.class);
         startActivity(intent);
+    }
+
+    public void selectDate(View view) {
+        datePicker.showDialog();
+    }
+
+    public void start(View view){
+        LogUtil.logView("start!");
+    }
+
+    private void initComponents() {
+        logView = (TextView) findViewById(R.id.log_view);
+        logView.setMovementMethod(new ScrollingMovementMethod());
+        patientView = (TextView) findViewById(R.id.patient_view);
+        doctorView = (TextView) findViewById(R.id.doctor_view);
+        dateView = (TextView) findViewById(R.id.date_view);
+    }
+
+    private void initAndroidPermissions() {
+        if (ContextCompat.checkSelfPermission(this, "android.permission.READ_SMS") != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{"android.permission.READ_SMS"}, 1);
+            LogUtil.log("no sms read permission");
+        }
+        if (ActivityCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED) {
+            LogUtil.log("no external store write permission");
+            ActivityCompat.requestPermissions(this, new String[]{"android.permission.WRITE_EXTERNAL_STORAGE",
+                    "android.permission.READ_EXTERNAL_STORAGE"}, 1);
+        }
+    }
+
+    private void initDatePicker() {
+        datePicker = DatePicker.getInstance(this).setShowDate(true).setShowWeek(true).setMultiChoice(false)
+                .setPickerCallback(new Consumer<List<TargetDate>>() {
+                    @Override
+                    public void apply(List<TargetDate> targetDates) {
+                        if (targetDates.isEmpty()) {
+                            dateView.setText(R.string.info_view_text);
+                            targetDate = null;
+                        } else {
+                            targetDate = targetDates.get(0);
+                            dateView.setText(TargetDate.list2String(targetDates));
+                        }
+                    }
+                }).build();
     }
 
     private void initData() {
@@ -169,13 +190,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void initMedicalData(HandleResult handleResult) {
         if (!handleResult.isOccurError()) {
-//            medicalService.login114();
+            medicalService.login114();
 
-            // set patient name
+            Medical medical = medicalService.getMedicalData();
+            patientId = medicalService.getTemp(Constants.key_intent_selected_contact_id);
+            doctorId = medicalService.getTemp(Constants.key_intent_selected_doctor_id);
+
+            // set contact name
             if (patientId != null) {
-                Medical medical = medicalService.getMedicalData();
                 List<Patient> patientList = medical.getPatientList();
-                if(patientList != null){
+                if (patientList != null) {
                     for (Patient patient : patientList) {
                         if (patient.getId().equals(patientId)) {
                             patientView.setText(patient.getName());
@@ -183,13 +207,59 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
-            }
-            if(doctorId == null){
-                medicalService.clearTemp();
             } else {
-                //// TODO: 2017/5/14 hospital+department+doctor ---> doctor_view 
+                medicalService.clearTemp(true);
+            }
+
+            // set doctor info
+            if (doctorId == null) {
+                medicalService.clearTemp(false);
+            } else {
+                String hospitalId = medicalService.getTemp(Constants.key_intent_selected_hospital_id);
+                String departmentId = medicalService.getTemp(Constants.key_intent_selected_department_id);
+                String doctorId = medicalService.getTemp(Constants.key_intent_selected_doctor_id);
+                Hospital hospital = null;
+                Department department = null;
+                Doctor doctor = null;
+                for (Hospital h : medical.getHospitalList()) {
+                    if (h.getId().equals(hospitalId)) {
+                        hospital = h;
+                        break;
+                    }
+                }
+                if (hospital != null) {
+                    for (Department d : hospital.getDepartmentList()) {
+                        if (d.getId().equals(departmentId)) {
+                            department = d;
+                            break;
+                        }
+                    }
+                }
+                if (department != null) {
+                    for (Doctor d : department.getDoctorList()) {
+                        if (d.getId().equals(doctorId)) {
+                            doctor = d;
+                        }
+                    }
+                }
+                if (doctor != null) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(hospital.getName()).append("-")
+                            .append(department.getName()).append("-")
+                            .append(doctor.getName());
+                    doctorView.setText(sb.toString());
+                }
             }
         }
+    }
+
+    private void registerSmsContentChangeObserver() {
+        smsObserver = new SmsObserver(handler);
+        getContentResolver().registerContentObserver(content_sms, true, smsObserver);
+    }
+
+    private void unregisterSmsContentObserver() {
+        getContentResolver().unregisterContentObserver(smsObserver);
     }
 
     private void readUnread114Sms() {
@@ -206,19 +276,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    }
-
-    public void httpTest(View view) {
-        medicalService.listMedicalResource("142", "200039608", "2017-05-16", false, new Consumer<HandleResult>() {
-            @Override
-            public void apply(HandleResult handleResult) {
-                List<MedicalResource> list = handleResult.getResourceList();
-                for (MedicalResource resource : list) {
-                    System.out.println(resource.getRemainAvailableNumber() + resource.getSkill());
-                }
-
-            }
-        });
     }
 
     private class SmsObserver extends ContentObserver {

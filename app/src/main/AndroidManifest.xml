@@ -27,7 +27,9 @@
         <service
             android:name=".aservice.MedicalForegroundServiceImpl"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false" >
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+        </service>
 
         <activity
             android:name=".activity.ContactListActivity"

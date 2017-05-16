@@ -1,6 +1,10 @@
 package anson.std.medical.dealer.support;
 
 import android.content.Context;
+import android.os.Environment;
+import android.os.storage.StorageManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ServiceCompat;
 
 import com.alibaba.fastjson.JSON;
 

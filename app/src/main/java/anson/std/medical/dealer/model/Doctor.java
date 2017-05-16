@@ -1,5 +1,7 @@
 package anson.std.medical.dealer.model;
 
+import java.util.List;
+
 /**
  * Created by anson on 17-5-8.
  */
@@ -10,6 +12,7 @@ public class Doctor {
     private String name;
     private String title;
     private String skill;
+    private List<TargetDate> targetDateList;
 
     public String getId() {
         return id;
@@ -41,5 +44,13 @@ public class Doctor {
 
     public void setSkill(String skill) {
         this.skill = skill;
+    }
+
+    public List<TargetDate> getTargetDateList() {
+        return targetDateList;
+    }
+
+    public void setTargetDateList(List<TargetDate> targetDateList) {
+        this.targetDateList = targetDateList;
     }
 }

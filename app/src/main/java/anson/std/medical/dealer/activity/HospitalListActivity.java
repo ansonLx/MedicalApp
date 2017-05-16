@@ -15,6 +15,7 @@ import java.util.List;
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.MedicalForegroundService;
 import anson.std.medical.dealer.R;
+import anson.std.medical.dealer.activity.support.MedicalConfirmDialog;
 import anson.std.medical.dealer.activity.support.MedicalListViewArrayAdapter;
 import anson.std.medical.dealer.activity.support.MedicalServiceConnection;
 import anson.std.medical.dealer.aservice.MedicalForegroundServiceImpl;
@@ -31,6 +32,7 @@ public class HospitalListActivity extends AppCompatActivity {
     private MedicalServiceConnection medicalServiceConnection;
     private MedicalForegroundService medicalForegroundService;
     private MedicalListViewArrayAdapter<Hospital> medicalListViewArrayAdapter;
+    private MedicalConfirmDialog<Hospital> delConfirmDialog;
     private Method getNameMethod;
 
     public HospitalListActivity() {
@@ -49,6 +51,8 @@ public class HospitalListActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.hospital_list_view);
         nameView = (TextView) findViewById(R.id.hospital_selected_text_view);
 
+        delConfirmDialog = new MedicalConfirmDialog<>(this);
+
         medicalServiceConnection = new MedicalServiceConnection(new Consumer<MedicalForegroundService>() {
             @Override
             public void apply(MedicalForegroundService medicalService) {
@@ -66,31 +70,55 @@ public class HospitalListActivity extends AppCompatActivity {
         unbindService(medicalServiceConnection);
     }
 
-    public void toCreateHospital(View view){
+    public void toCreateHospital(View view) {
         Intent intent = new Intent(this, HospitalActivity.class);
         startActivity(intent);
     }
 
-    public void selectHospital(View view){
+    public void selectHospital(View view) {
         Hospital hospital = medicalListViewArrayAdapter.getSelectedItem();
-        if(hospital != null){
+        if (hospital != null) {
             medicalForegroundService.setTemp(Constants.key_intent_selected_hospital_id, hospital.getId());
             Intent intent = new Intent(this, DepartmentListActivity.class);
             startActivity(intent);
         }
     }
 
-    private void initData(){
-        Medical medical= medicalForegroundService.getMedicalData();
-        if(medical != null){
-            List<Hospital> hospitalList =medical.getHospitalList();
-            if(hospitalList != null){
+    private void initData() {
+        final Medical medical = medicalForegroundService.getMedicalData();
+        if (medical != null) {
+            List<Hospital> hospitalList = medical.getHospitalList();
+            if (hospitalList != null) {
                 medicalListViewArrayAdapter = new MedicalListViewArrayAdapter<>(context, hospitalList, getNameMethod, new Consumer<Hospital>() {
                     @Override
                     public void apply(Hospital hospital) {
                         Intent intent = new Intent(context, HospitalActivity.class);
                         intent.putExtra(Constants.key_intent_hospital_id, hospital.getId());
                         startActivity(intent);
+                    }
+                }, new Consumer<Hospital>() {
+                    @Override
+                    public void apply(Hospital hospital) {
+                        delConfirmDialog.openConfirmDialog(getString(R.string.del_message), hospital, new Consumer<Hospital>() {
+                            @Override
+                            public void apply(Hospital delHospital) {
+                                Medical m = medicalForegroundService.getMedicalData();
+                                List<Hospital> hospitals = m.getHospitalList();
+                                int index = -1;
+                                for (Hospital h : hospitals) {
+                                    if (h.getId().equals(delHospital.getId())) {
+                                        index = hospitals.indexOf(h);
+                                    }
+                                }
+                                if (index != -1) {
+                                    hospitals.remove(index);
+                                    medicalForegroundService.saveMedicalData(medical, null);
+                                    nameView.setText("");
+                                    medicalForegroundService.clearTemp(false);
+                                    medicalListViewArrayAdapter.flushData(hospitals);
+                                }
+                            }
+                        });
                     }
                 });
                 listView.setAdapter(medicalListViewArrayAdapter);

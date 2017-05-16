@@ -9,6 +9,8 @@ public class MedicalResource {
     private String hospitalId;
     private String departmentId;
     private String doctorId;
+    private String doctorName;
+    private String doctorTitleName;
     private String date;
     private Boolean amPm;
     private Patient patient;
@@ -39,6 +41,22 @@ public class MedicalResource {
 
     public void setDoctorId(String doctorId) {
         this.doctorId = doctorId;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
+    }
+
+    public String getDoctorTitleName() {
+        return doctorTitleName;
+    }
+
+    public void setDoctorTitleName(String doctorTitleName) {
+        this.doctorTitleName = doctorTitleName;
     }
 
     public String getDate() {

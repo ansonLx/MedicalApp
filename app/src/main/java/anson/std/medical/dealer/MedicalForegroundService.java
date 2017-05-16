@@ -1,5 +1,6 @@
 package anson.std.medical.dealer;
 
+import anson.std.medical.dealer.model.Doctor;
 import anson.std.medical.dealer.model.Medical;
 
 /**
@@ -16,7 +17,9 @@ public interface MedicalForegroundService {
 
     String getTemp(String key);
 
-    void clearTemp();
+    void clearTemp(boolean clearContact);
+
+    Doctor getDoctorById(String doctorId);
 
     Medical getMedicalData();
 

@@ -9,13 +9,13 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.MedicalForegroundService;
 import anson.std.medical.dealer.R;
-import anson.std.medical.dealer.activity.support.MedicalListViewArrayAdapter;
+import anson.std.medical.dealer.activity.support.MedicalConfirmDialog;
+import anson.std.medical.dealer.activity.support.MedicalDoctorListViewAdapter;
 import anson.std.medical.dealer.activity.support.MedicalServiceConnection;
 import anson.std.medical.dealer.aservice.MedicalForegroundServiceImpl;
 import anson.std.medical.dealer.model.Department;
@@ -32,19 +32,11 @@ public class DoctorListActivity extends AppCompatActivity {
 
     private MedicalServiceConnection medicalServiceConnection;
     private MedicalForegroundService medicalForegroundService;
-    private MedicalListViewArrayAdapter<Doctor> medicalListViewArrayAdapter;
+    private MedicalDoctorListViewAdapter medicalDoctorListViewAdapter;
+    private MedicalConfirmDialog<Doctor> delConfirmDialog;
 
     private String selectedHospitalId;
     private String selectedDepartmentId;
-    private Method getDoctorNameMethod;
-
-    public DoctorListActivity() {
-        try {
-            this.getDoctorNameMethod = Doctor.class.getMethod("getName");
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +44,19 @@ public class DoctorListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_doctor_list);
         context = this;
         listView = (ListView) findViewById(R.id.doctor_list_view);
-        nameView = (TextView) findViewById(R.id.doctor_name_view);
+        nameView = (TextView) findViewById(R.id.doctor_name_input);
+
+        delConfirmDialog = new MedicalConfirmDialog(this);
+
+        medicalDoctorListViewAdapter = new MedicalDoctorListViewAdapter(context, getModifyInListCallback(), getDelInListCallback());
+        listView.setAdapter(medicalDoctorListViewAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String doctorName = medicalDoctorListViewAdapter.onItemClick(view, null, null);
+                nameView.setText(doctorName);
+            }
+        });
 
         medicalServiceConnection = new MedicalServiceConnection(new Consumer<MedicalForegroundService>() {
             @Override
@@ -71,7 +75,7 @@ public class DoctorListActivity extends AppCompatActivity {
     }
 
     public void selectDoctor(View view) {
-        Doctor doctor = medicalListViewArrayAdapter.getSelectedItem();
+        Doctor doctor = medicalDoctorListViewAdapter.getSelectDoctor();
         if (doctor != null) {
             medicalForegroundService.setTemp(Constants.key_intent_selected_doctor_id, doctor.getId());
             Intent intent = new Intent(this, MainActivity.class);
@@ -107,28 +111,72 @@ public class DoctorListActivity extends AppCompatActivity {
                         if (department != null) {
                             List<Doctor> doctorList = department.getDoctorList();
                             if (doctorList != null) {
-                                medicalListViewArrayAdapter = new MedicalListViewArrayAdapter<>(context, doctorList, getDoctorNameMethod, new Consumer<Doctor>() {
-                                    @Override
-                                    public void apply(Doctor doctor) {
-                                        Intent intent = new Intent(context, DoctorActivity.class);
-                                        intent.putExtra(Constants.key_intent_doctor_id, doctor.getId());
-                                        startActivity(intent);
-                                    }
-                                });
-                                listView.setAdapter(medicalListViewArrayAdapter);
-                                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                    @Override
-                                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                        String checkedName = medicalListViewArrayAdapter.onItemClick(view);
-                                        nameView.setText(checkedName);
-                                    }
-                                });
+                                medicalDoctorListViewAdapter.addData(doctorList);
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    private Consumer<Doctor> getModifyInListCallback() {
+        return new Consumer<Doctor>() {
+            @Override
+            public void apply(Doctor doctor) {
+                Intent intent = new Intent(context, DoctorActivity.class);
+                intent.putExtra(Constants.key_intent_doctor_id, doctor.getId());
+                startActivity(intent);
+            }
+        };
+    }
+
+    private Consumer<Doctor> getDelInListCallback() {
+        return new Consumer<Doctor>() {
+            @Override
+            public void apply(Doctor doctor) {
+                delConfirmDialog.openConfirmDialog(getString(R.string.del_message), doctor, new Consumer<Doctor>() {
+                    @Override
+                    public void apply(Doctor doctor) {
+                        Medical medical = medicalForegroundService.getMedicalData();
+                        Hospital hospital = null;
+                        String hospitalId = medicalForegroundService.getTemp(Constants.key_intent_selected_hospital_id);
+                        for (Hospital h : medical.getHospitalList()) {
+                            if (h.getId().equals(hospitalId)) {
+                                hospital = h;
+                                break;
+                            }
+                        }
+                        if (hospital != null) {
+                            String departmentId = medicalForegroundService.getTemp(Constants.key_intent_selected_department_id);
+                            Department department = null;
+                            for (Department d : hospital.getDepartmentList()) {
+                                if (d.getId().equals(departmentId)) {
+                                    department = d;
+                                    break;
+                                }
+                            }
+                            if (department != null) {
+                                List<Doctor> doctorList = department.getDoctorList();
+                                int index = -1;
+                                for (Doctor d : doctorList) {
+                                    if (d.getId().equals(doctor.getId())) {
+                                        index = doctorList.indexOf(d);
+                                    }
+                                }
+                                if (index != -1) {
+                                    doctorList.remove(index);
+                                    nameView.setText("");
+                                    medicalForegroundService.saveMedicalData(medical, null);
+                                    medicalDoctorListViewAdapter.flushData();
+                                    medicalDoctorListViewAdapter.addData(doctorList);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        };
     }
 
     @Override

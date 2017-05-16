@@ -16,8 +16,12 @@ import java.util.Map;
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.MedicalForegroundService;
 import anson.std.medical.dealer.HandleResult;
+import anson.std.medical.dealer.model.Department;
+import anson.std.medical.dealer.model.Doctor;
+import anson.std.medical.dealer.model.Hospital;
 import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.MedicalService;
+import anson.std.medical.dealer.model.Patient;
 import anson.std.medical.dealer.service.impl.MedicalServiceImpl;
 import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.LogUtil;
@@ -121,8 +125,49 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
     }
 
     @Override
-    public void clearTemp() {
-        tempMap.clear();
+    public void clearTemp(boolean clearContact) {
+        if (clearContact) {
+            tempMap.remove(Constants.key_intent_selected_contact_id);
+        } else {
+            String contactId = tempMap.get(Constants.key_intent_selected_contact_id);
+            tempMap.clear();
+            if (contactId != null) {
+                tempMap.put(Constants.key_intent_selected_contact_id, contactId);
+            }
+        }
+    }
+
+    @Override
+    public Doctor getDoctorById(String doctorId) {
+        Doctor doctor = null;
+        if (medicalService.getMedicalData() != null) {
+            Medical medical = medicalService.getMedicalData();
+            Hospital hospital = null;
+            String selectHospitalId = tempMap.get(Constants.key_intent_selected_hospital_id);
+            for (Hospital h : medical.getHospitalList()) {
+                if (h.getId().equals(selectHospitalId)) {
+                    hospital = h;
+                    break;
+                }
+            }
+            if (hospital != null) {
+                Department department = null;
+                String departmentId = tempMap.get(Constants.key_intent_selected_department_id);
+                for (Department d : hospital.getDepartmentList()) {
+                    if (d.getId().equals(departmentId)) {
+                        department = d;
+                        break;
+                    }
+                }
+                for (Doctor d : department.getDoctorList()) {
+                    if (d.getId().equals(doctorId)) {
+                        doctor = d;
+                        break;
+                    }
+                }
+            }
+        }
+        return doctor;
     }
 
     @Override

@@ -1,6 +1,9 @@
 package anson.std.medical.dealer.service.impl;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Base64;
 
 import java.io.File;
@@ -19,6 +22,7 @@ import javax.crypto.spec.DESKeySpec;
 
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.HandleResult;
+import anson.std.medical.dealer.MedicalApplication;
 import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.Medical114Api;
 import anson.std.medical.dealer.model.Medical;
