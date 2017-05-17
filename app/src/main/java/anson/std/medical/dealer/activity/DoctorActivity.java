@@ -75,6 +75,7 @@ public class DoctorActivity extends AppCompatActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_doctor);
+        setTitle(R.string.activity_label_doctor_edit);
         initView();
         initDatePicker();
         initListView();
@@ -130,18 +131,6 @@ public class DoctorActivity extends AppCompatActivity {
                 }
             }
         }
-
-        // test
-        List<Doctor> testDoctorList = new ArrayList<>();
-        for (int i = 0; i != 20; i++) {
-            Doctor doctor = new Doctor();
-            doctor.setId("doctorId_" + i);
-            doctor.setName("doctorName_" + i);
-            doctor.setTitle("doctorTitle_" + i);
-            doctor.setSkill("doctorSkill_" + i);
-            testDoctorList.add(doctor);
-        }
-//        medicalDoctorListViewAdapter.addData(testDoctorList);
     }
 
     private void initDatePicker() {

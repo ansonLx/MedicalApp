@@ -35,6 +35,7 @@ public class ContactActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact);
+        setTitle(R.string.activity_label_contact_edit);
         contactNameEditText = (EditText) findViewById(R.id.contact_name_edit_view);
         contactIdEditText = (EditText) findViewById(R.id.contact_id_edit_view);
         hospitalCardEditText = (EditText) findViewById(R.id.contact_hospital_card_edit_view);

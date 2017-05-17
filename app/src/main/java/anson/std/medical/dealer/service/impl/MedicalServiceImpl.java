@@ -64,29 +64,24 @@ public class MedicalServiceImpl implements MedicalService {
         if (medical == null) {
             File appPrivateDir = FileUtil.getAppPrivateDirectory();
             File medicalFile = new File(appPrivateDir, Constants.medical_data_file_name);
+            HandleResult handleResult = new HandleResult();
             if (medicalFile.exists() && medicalFile.isFile()) {
                 medical = FileUtil.readFile(medicalFile, Medical.class);
+                deEncryptModel(medical);
                 LogUtil.log("load medical data from file success");
+
+                handleResult.setOccurError(false);
+                handleResult.setMessage("data load success");
+                handleResult.setMedical(medical);
+                callback.apply(handleResult);
             } else {
-                LogUtil.log("no medical data file found, will generate new one");
-                medicalFile = FileUtil.createFile(appPrivateDir, Constants.medical_data_file_name);
-                medical = new Medical();
-                medical.setUserName("18600397835");
-                medical.setPwd("51200468q");
-                encryptModel(medical);
-                FileUtil.flushFileByObject(medicalFile, medical);
-                LogUtil.log("write medical data to file success");
+                handleResult.setOccurError(true);
+                handleResult.setMessage("no data file exists");
+                callback.apply(handleResult);
             }
-            deEncryptModel(medical);
         } else {
             LogUtil.log("medical data has been loaded, need not to reload it");
         }
-
-        HandleResult handleResult = new HandleResult();
-        handleResult.setOccurError(false);
-        handleResult.setMessage("data load success");
-        handleResult.setMedical(medical);
-        callback.apply(handleResult);
     }
 
     @Override
@@ -99,6 +94,12 @@ public class MedicalServiceImpl implements MedicalService {
             deEncryptModel(medical);
             this.medical = medical;
             LogUtil.logView("write medical data to file success");
+            if(callback != null){
+                HandleResult handleResult = new HandleResult();
+                handleResult.setOccurError(false);
+                handleResult.setMessage("write medical data to file success");
+                callback.apply(handleResult);
+            }
         } else {
             LogUtil.logView("medical is null, nothing will write to file");
         }

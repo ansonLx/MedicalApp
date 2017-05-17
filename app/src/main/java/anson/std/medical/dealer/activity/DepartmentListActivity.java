@@ -51,6 +51,7 @@ public class DepartmentListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_department_list);
+        setTitle(R.string.activity_label_department);
 
         context = this;
         departmentListView = (ListView) findViewById(R.id.department_list_view);

@@ -8,6 +8,11 @@
         android:maxSdkVersion="18" />
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- To auto-complete the email text field in the login form with the user's emails -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.READ_PROFILE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application
         android:name=".MedicalApplication"
         android:allowBackup="true"
@@ -27,8 +32,8 @@
         <service
             android:name=".aservice.MedicalForegroundServiceImpl"
             android:enabled="true"
-            android:exported="false" >
-            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+            android:exported="false">
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
         </service>
 
         <activity
@@ -37,18 +42,25 @@
         <activity
             android:name=".activity.ContactActivity"
             android:parentActivityName=".activity.ContactListActivity" />
-        <activity android:name=".activity.HospitalListActivity"
-            android:parentActivityName=".activity.MainActivity"/>
-        <activity android:name=".activity.DepartmentListActivity"
-            android:parentActivityName=".activity.HospitalListActivity"/>
-        <activity android:name=".activity.DoctorListActivity"
-            android:parentActivityName=".activity.DepartmentListActivity"/>
-        <activity android:name=".activity.HospitalActivity"
-            android:parentActivityName=".activity.HospitalListActivity"/>
-        <activity android:name=".activity.DoctorActivity"
-            android:parentActivityName=".activity.DoctorListActivity"/>
-        <activity android:name=".activity.DepartmentActivity"
-            android:parentActivityName=".activity.DepartmentListActivity"></activity>
+        <activity
+            android:name=".activity.HospitalListActivity"
+            android:parentActivityName=".activity.MainActivity" />
+        <activity
+            android:name=".activity.DepartmentListActivity"
+            android:parentActivityName=".activity.HospitalListActivity" />
+        <activity
+            android:name=".activity.DoctorListActivity"
+            android:parentActivityName=".activity.DepartmentListActivity" />
+        <activity
+            android:name=".activity.HospitalActivity"
+            android:parentActivityName=".activity.HospitalListActivity" />
+        <activity
+            android:name=".activity.DoctorActivity"
+            android:parentActivityName=".activity.DoctorListActivity" />
+        <activity
+            android:name=".activity.DepartmentActivity"
+            android:parentActivityName=".activity.DepartmentListActivity" />
+        <activity android:name=".activity.UserActivity"></activity>
     </application>
 
 </manifest>

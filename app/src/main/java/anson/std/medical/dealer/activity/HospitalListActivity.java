@@ -47,6 +47,7 @@ public class HospitalListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hospital_list);
+        setTitle(R.string.activity_label_hospital);
         context = this;
         listView = (ListView) findViewById(R.id.hospital_list_view);
         nameView = (TextView) findViewById(R.id.hospital_selected_text_view);
@@ -76,11 +77,13 @@ public class HospitalListActivity extends AppCompatActivity {
     }
 
     public void selectHospital(View view) {
-        Hospital hospital = medicalListViewArrayAdapter.getSelectedItem();
-        if (hospital != null) {
-            medicalForegroundService.setTemp(Constants.key_intent_selected_hospital_id, hospital.getId());
-            Intent intent = new Intent(this, DepartmentListActivity.class);
-            startActivity(intent);
+        if(medicalListViewArrayAdapter != null){
+            Hospital hospital = medicalListViewArrayAdapter.getSelectedItem();
+            if (hospital != null) {
+                medicalForegroundService.setTemp(Constants.key_intent_selected_hospital_id, hospital.getId());
+                Intent intent = new Intent(this, DepartmentListActivity.class);
+                startActivity(intent);
+            }
         }
     }
 

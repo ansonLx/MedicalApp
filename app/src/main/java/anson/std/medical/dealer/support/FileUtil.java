@@ -50,7 +50,7 @@ public class FileUtil {
      * sdcard 0 > internal external store
      * @return
      */
-    public static File getAppPrivateDirectory(){
+    public static File getAppPrivateDirectoryForLog(){
         File appPrivateDir;
         List<File> sdCards = FileUtil.getSDCardExternalDirectory();
         if (sdCards != null) {
@@ -59,6 +59,14 @@ public class FileUtil {
             appPrivateDir = FileUtil.getInternalExternalDirectory();
         }
         return appPrivateDir;
+    }
+
+    /**
+     * sdcard 0 > internal external store
+     * @return
+     */
+    public static File getAppPrivateDirectory(){
+        return context.getFilesDir();
     }
 
     public static File createFile(File directory, String fileName) {

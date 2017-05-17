@@ -42,6 +42,7 @@ public class DoctorListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_doctor_list);
+        setTitle(R.string.activity_label_doctor);
         context = this;
         listView = (ListView) findViewById(R.id.doctor_list_view);
         nameView = (TextView) findViewById(R.id.doctor_name_input);

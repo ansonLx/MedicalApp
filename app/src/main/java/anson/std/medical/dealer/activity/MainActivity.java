@@ -30,7 +30,6 @@ import anson.std.medical.dealer.model.Department;
 import anson.std.medical.dealer.model.Doctor;
 import anson.std.medical.dealer.model.Hospital;
 import anson.std.medical.dealer.model.Medical;
-import anson.std.medical.dealer.model.MedicalResource;
 import anson.std.medical.dealer.model.Patient;
 import anson.std.medical.dealer.model.TargetDate;
 import anson.std.medical.dealer.support.Constants;
@@ -40,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final Uri content_sms = Uri.parse("content://sms/");
 
+    private Context context;
     private TextView logView;
     private TextView patientView;
     private TextView doctorView;
@@ -131,7 +131,13 @@ public class MainActivity extends AppCompatActivity {
         LogUtil.logView("start!");
     }
 
+    public void toUser(View view){
+        Intent intent = new Intent(context, UserActivity.class);
+        startActivity(intent);
+    }
+
     private void initComponents() {
+        context = this;
         logView = (TextView) findViewById(R.id.log_view);
         logView.setMovementMethod(new ScrollingMovementMethod());
         patientView = (TextView) findViewById(R.id.patient_view);
@@ -172,18 +178,33 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void apply(HandleResult handleResult) {
-                Message message = handler.obtainMessage();
-                Object[] os = new Object[2];
-                os[0] = new Consumer<HandleResult>() {
+                if(handleResult.isOccurError()){
+                    Message message = handler.obtainMessage();
+                    Object[] os = new Object[2];
+                    os[0] = new Consumer<HandleResult>() {
+                        @Override
+                        public void apply(HandleResult result) {
+                            Intent intent = new Intent(context, UserActivity.class);
+                            startActivity(intent);
+                        }
+                    };
+                    os[1] = handleResult;
+                    message.obj = os;
+                    handler.sendMessage(message);
+                } else {
+                    Message message = handler.obtainMessage();
+                    Object[] os = new Object[2];
+                    os[0] = new Consumer<HandleResult>() {
 
-                    @Override
-                    public void apply(HandleResult handleResult) {
-                        initMedicalData(handleResult);
-                    }
-                };
-                os[1] = handleResult;
-                message.obj = os;
-                handler.sendMessage(message);
+                        @Override
+                        public void apply(HandleResult handleResult) {
+                            initMedicalData(handleResult);
+                        }
+                    };
+                    os[1] = handleResult;
+                    message.obj = os;
+                    handler.sendMessage(message);
+                }
             }
         });
     }

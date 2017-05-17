@@ -46,6 +46,7 @@ public class ContactListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_list);
+        setTitle(R.string.activity_label_contact);
 
         context = this;
         listView = (ListView) findViewById(R.id.contact_list_view);

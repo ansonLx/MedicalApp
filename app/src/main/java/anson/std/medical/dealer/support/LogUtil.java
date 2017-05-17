@@ -36,7 +36,7 @@ public class LogUtil {
     static {
 
         // create log file
-        File appDir = FileUtil.getAppPrivateDirectory();
+        File appDir = FileUtil.getAppPrivateDirectoryForLog();
         File logDir = new File(appDir, "log");
         if (!logDir.exists()) {
             logDir.mkdirs();

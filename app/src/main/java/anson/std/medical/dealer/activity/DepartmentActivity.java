@@ -36,6 +36,7 @@ public class DepartmentActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_department);
+        setTitle(R.string.activity_label_department_edit);
         departmentIdEditText = (EditText) findViewById(R.id.department_id_edit_view);
         departmentNameEditText = (EditText) findViewById(R.id.department_name_edit_view);
 

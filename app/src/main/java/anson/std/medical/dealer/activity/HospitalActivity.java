@@ -35,6 +35,7 @@ public class HospitalActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hospital);
+        setTitle(R.string.activity_label_hospital_edit);
         hospitalNameEditText = (EditText) findViewById(R.id.hospital_name_edit_view);
         hospitalIdEditText = (EditText) findViewById(R.id.hospital_id_edit_view);
 
