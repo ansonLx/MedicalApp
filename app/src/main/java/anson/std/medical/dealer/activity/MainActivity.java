@@ -14,9 +14,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import anson.std.medical.dealer.MedicalForegroundService;
 import anson.std.medical.dealer.R;
@@ -38,6 +42,7 @@ import anson.std.medical.dealer.support.LogUtil;
 public class MainActivity extends AppCompatActivity {
 
     private static final Uri content_sms = Uri.parse("content://sms/");
+    private Pattern pattern = Pattern.compile("\\d{6,}");
 
     private Context context;
     private TextView logView;
@@ -81,9 +86,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         bindService(bindIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
-
-        LogUtil.log("main activity on create");
-
     }
 
     @Override
@@ -127,11 +129,16 @@ public class MainActivity extends AppCompatActivity {
         datePicker.showDialog();
     }
 
-    public void start(View view){
-        LogUtil.logView("start!");
+    public void start(View view) {
+        if (targetDate != null) {
+            LogUtil.logView("start!");
+            medicalService.start(targetDate, getDealerStepCallback());
+            Button button = (Button) view;
+            button.setActivated(false);
+        }
     }
 
-    public void toUser(View view){
+    public void toUser(View view) {
         Intent intent = new Intent(context, UserActivity.class);
         startActivity(intent);
     }
@@ -146,14 +153,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initAndroidPermissions() {
+        List<String> needToRequestPermissions = new ArrayList<>();
         if (ContextCompat.checkSelfPermission(this, "android.permission.READ_SMS") != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{"android.permission.READ_SMS"}, 1);
+            needToRequestPermissions.add("android.permission.READ_SMS");
             LogUtil.log("no sms read permission");
         }
         if (ActivityCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED) {
             LogUtil.log("no external store write permission");
-            ActivityCompat.requestPermissions(this, new String[]{"android.permission.WRITE_EXTERNAL_STORAGE",
-                    "android.permission.READ_EXTERNAL_STORAGE"}, 1);
+            needToRequestPermissions.add("android.permission.WRITE_EXTERNAL_STORAGE");
+        }
+        if (!needToRequestPermissions.isEmpty()) {
+            ActivityCompat.requestPermissions(MainActivity.this, needToRequestPermissions.toArray(new String[2]), 9528);
         }
     }
 
@@ -178,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void apply(HandleResult handleResult) {
-                if(handleResult.isOccurError()){
+                if (handleResult.isOccurError()) {
                     Message message = handler.obtainMessage();
                     Object[] os = new Object[2];
                     os[0] = new Consumer<HandleResult>() {
@@ -274,6 +284,39 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private Consumer<HandleResult> getDealerStepCallback() {
+        return new Consumer<HandleResult>() {
+            @Override
+            public void apply(HandleResult handleResult) {
+                Message message = handler.obtainMessage();
+                Object[] os = new Object[2];
+                os[0] = new Consumer<HandleResult>() {
+                    @Override
+                    public void apply(HandleResult result) {
+                        logToLogView(result.getMessage());
+                        if (result.isOccurError()) {
+                            medicalService.start(targetDate, getDealerStepCallback());
+                        }
+                    }
+                };
+                os[1] = handleResult;
+                message.obj = os;
+                handler.sendMessage(message);
+            }
+        };
+    }
+
+    private void logToLogView(String message) {
+        if (message != null) {
+            logView.append(message.trim() + "\n");
+            int textHeight = logView.getLineHeight() * logView.getLineCount();
+            int height = logView.getHeight();
+            if (textHeight > height) {
+                logView.scrollTo(0, textHeight - height);
+            }
+        }
+    }
+
     private void registerSmsContentChangeObserver() {
         smsObserver = new SmsObserver(handler);
         getContentResolver().registerContentObserver(content_sms, true, smsObserver);
@@ -284,16 +327,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void readUnread114Sms() {
-        String[] projection = new String[]{"address", "body", "date", "status"};
-        Cursor cursor = getContentResolver().query(content_sms, projection, "address='114'", null, "date desc");
+        String[] projection = new String[]{"address", "body", "read"};
+        Cursor cursor = getContentResolver().query(content_sms, projection, "address='114' and read='0'", null, "date desc");
         if (cursor != null) {
             while (cursor.moveToNext()) {
-                LogUtil.log("a message ----->");
-                String[] fields = cursor.getColumnNames();
-                for (int i = 0; i < fields.length; i++) {
-                    String fieldName = fields[i];
-                    String value = cursor.getString(cursor.getColumnIndex(fieldName));
-                    System.out.println("\t " + fieldName + " --> " + value);
+                String body = cursor.getColumnName(cursor.getColumnIndex("body"));
+                Matcher matcher = pattern.matcher(body.trim());
+                if (matcher.find()) {
+                    String verifyCode = matcher.group();
+                    LogUtil.log("receive verify code -> {}", verifyCode);
+                    logToLogView("receive verify cod -> " + verifyCode);
+                    medicalService.submitVerifyCode(verifyCode, getDealerStepCallback());
                 }
             }
         }

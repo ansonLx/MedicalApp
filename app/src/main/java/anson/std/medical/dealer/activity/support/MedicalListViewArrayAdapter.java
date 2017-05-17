@@ -44,7 +44,7 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
             }
         }
         this.getShowNameMethod = getShowNameMethod;
-        this.checkedColor = context.getResources().getColor(R.color.colorAccent, null);
+        this.checkedColor = context.getResources().getColor(R.color.list_selected, null);
         this.editCallback = editCallback;
         this.delCallback = delCallback;
     }
@@ -63,13 +63,11 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
 
     @Override
     public int getCount() {
-        System.out.println("call get count");
         return dataList.size();
     }
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-        System.out.println("call get view");
         final DataOnItem itemData = dataList.get(position);
         itemData.position = position;
         if (convertView == null) {

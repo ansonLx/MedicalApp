@@ -37,6 +37,7 @@ public class DatePicker extends ArrayAdapter {
     private boolean multiChoice = false;
     private boolean isShowDate = true;
     private boolean isShowWeek = false;
+    private String title;
 
     private Consumer<List<TargetDate>> pickerCallback;
 
@@ -48,6 +49,7 @@ public class DatePicker extends ArrayAdapter {
         super(context, R.layout.medical_date_picker_list_view_layout);
         this.context = context;
         this.resource = R.layout.medical_date_picker_list_view_layout;
+        this.title = context.getString(R.string.date_picker_title);
     }
 
     public DatePicker build() {
@@ -55,7 +57,7 @@ public class DatePicker extends ArrayAdapter {
             isShowDate = true;
         }
         AlertDialog.Builder dialog = new AlertDialog.Builder(context);
-        dialog.setAdapter(this, null).setTitle(R.string.date_picker_title);
+        dialog.setAdapter(this, null).setTitle(this.title);
         if (multiChoice) {
             dialog.setPositiveButton(context.getString(R.string.date_picker_confirm), new DialogInterface.OnClickListener() {
                 @Override
@@ -92,6 +94,11 @@ public class DatePicker extends ArrayAdapter {
     public DatePicker setInitDateForWeek(List<TargetDate> targetDateList) {
         this.initDate = targetDateList;
         initDateItem();
+        return this;
+    }
+
+    public DatePicker setTitle(String title){
+        this.title = title;
         return this;
     }
 

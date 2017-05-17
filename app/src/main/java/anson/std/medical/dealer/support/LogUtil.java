@@ -70,7 +70,7 @@ public class LogUtil {
         log(msg, null, true, default_wirte);
     }
 
-    public static void logView(String msg, Object[] param){
+    public static void logView(String msg, Object... param){
         log(msg, param, true, default_wirte);
     }
 

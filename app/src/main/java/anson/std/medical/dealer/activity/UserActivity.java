@@ -1,9 +1,9 @@
 package anson.std.medical.dealer.activity;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,7 +16,7 @@ import anson.std.medical.dealer.activity.support.MedicalServiceConnection;
 import anson.std.medical.dealer.aservice.MedicalForegroundServiceImpl;
 import anson.std.medical.dealer.model.Medical;
 
-public class UserActivity extends Activity {
+public class UserActivity extends AppCompatActivity {
 
     private MedicalServiceConnection medicalServiceConnection;
     private MedicalForegroundService medicalForegroundService;

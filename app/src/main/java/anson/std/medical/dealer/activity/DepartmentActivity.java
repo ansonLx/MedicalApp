@@ -36,7 +36,7 @@ public class DepartmentActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_department);
-        setTitle(R.string.activity_label_department_edit);
+        setTitle(R.string.activity_label_department_create);
         departmentIdEditText = (EditText) findViewById(R.id.department_id_edit_view);
         departmentNameEditText = (EditText) findViewById(R.id.department_name_edit_view);
 
@@ -45,6 +45,7 @@ public class DepartmentActivity extends AppCompatActivity {
             departmentId = startIntent.getStringExtra(Constants.key_intent_department_id);
             Button saveBtn = (Button) findViewById(R.id.department_save_btn);
             saveBtn.setText(R.string.department_save_edit);
+            setTitle(R.string.department_save_edit);
         }
 
         medicalServiceConnection = new MedicalServiceConnection(new Consumer<MedicalForegroundService>() {

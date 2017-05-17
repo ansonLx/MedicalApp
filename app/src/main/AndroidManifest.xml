@@ -60,7 +60,9 @@
         <activity
             android:name=".activity.DepartmentActivity"
             android:parentActivityName=".activity.DepartmentListActivity" />
-        <activity android:name=".activity.UserActivity"></activity>
+        <activity
+            android:name=".activity.UserActivity"
+            android:parentActivityName=".activity.MainActivity" />
     </application>
 
 </manifest>

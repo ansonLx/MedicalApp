@@ -29,13 +29,15 @@ public class MedicalDoctorListViewAdapter extends ArrayAdapter {
     private List<DataOnItem> dataList = new ArrayList<>();
     private Consumer<Doctor> editCallback;
     private Consumer<Doctor> delCallback;
+    private Consumer<Doctor> addSkillCallback;
     private boolean hasBtn;
 
-    public MedicalDoctorListViewAdapter(Context context){
+    public MedicalDoctorListViewAdapter(Context context, Consumer<Doctor> addSkillCallback){
         super(context, R.layout.medical_resource_list_view_without_btn_layout);
         this.resource = R.layout.medical_resource_list_view_without_btn_layout;
         this.context = context;
-        this.checkedColor = context.getResources().getColor(R.color.colorAccent, null);
+        this.checkedColor = context.getResources().getColor(R.color.list_selected, null);
+        this.addSkillCallback = addSkillCallback;
         hasBtn = false;
     }
 
@@ -43,7 +45,7 @@ public class MedicalDoctorListViewAdapter extends ArrayAdapter {
         super(context, R.layout.medical_resource_list_view_layout);
         this.resource = R.layout.medical_resource_list_view_layout;
         this.context = context;
-        this.checkedColor = context.getResources().getColor(R.color.colorAccent, null);
+        this.checkedColor = context.getResources().getColor(R.color.list_selected, null);
         this.editCallback = editCallback;
         this.delCallback = delCallback;
         hasBtn = true;
@@ -63,6 +65,15 @@ public class MedicalDoctorListViewAdapter extends ArrayAdapter {
         TextView doctorNameView = (TextView) convertView.findViewById(R.id.doctor_name_view);
         TextView doctorTitleView = (TextView) convertView.findViewById(R.id.doctor_title_view);
         TextView doctorSkillView = (TextView) convertView.findViewById(R.id.doctor_skill_view);
+        if(!hasBtn && addSkillCallback != null){
+            Button doctorAddSkillBtn = (Button) convertView.findViewById(R.id.doctor_add_skill_btn);
+            doctorAddSkillBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    addSkillCallback.apply(dataOnItem.doctor);
+                }
+            });
+        }
         if(hasBtn){
             TextView doctorTimerView = (TextView) convertView.findViewById(R.id.doctor_timer_view);
             Button editBtn = (Button) convertView.findViewById(R.id.edit_btn);

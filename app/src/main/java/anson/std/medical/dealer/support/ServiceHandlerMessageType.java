@@ -8,6 +8,7 @@ public enum ServiceHandlerMessageType {
     LoadDataFile,
     WriteDataFile,
     CommitTheDealer,
+    CommitVerifyCode,
     Login114,
     ListMedicalResource;
 

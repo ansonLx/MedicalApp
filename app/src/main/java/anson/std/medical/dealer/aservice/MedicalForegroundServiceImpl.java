@@ -22,6 +22,7 @@ import anson.std.medical.dealer.model.Hospital;
 import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.model.Patient;
+import anson.std.medical.dealer.model.TargetDate;
 import anson.std.medical.dealer.service.impl.MedicalServiceImpl;
 import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.LogUtil;
@@ -29,6 +30,8 @@ import anson.std.medical.dealer.support.NotificationUtil;
 import anson.std.medical.dealer.Medical114Api;
 import anson.std.medical.dealer.web.api.impl.Medical114ApiImpl;
 
+import static anson.std.medical.dealer.support.ServiceHandlerMessageType.CommitTheDealer;
+import static anson.std.medical.dealer.support.ServiceHandlerMessageType.CommitVerifyCode;
 import static anson.std.medical.dealer.support.ServiceHandlerMessageType.ListMedicalResource;
 import static anson.std.medical.dealer.support.ServiceHandlerMessageType.LoadDataFile;
 import static anson.std.medical.dealer.support.ServiceHandlerMessageType.Login114;
@@ -41,7 +44,7 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
     private static MedicalServiceHandler handler;
     private static HandlerThread handlerThread;
 
-    private Map<String, String> tempMap;
+
 
     private MedicalServiceBinder binder;
     private MedicalService medicalService;
@@ -52,12 +55,12 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
         handlerThread.start();
 
         Medical114Api medical114Api = new Medical114ApiImpl();
-        medicalService = new MedicalServiceImpl(this, medical114Api);
-        handler = new MedicalServiceHandler(this, medicalService, notificationId, handlerThread.getLooper());
+        medicalService = new MedicalServiceImpl(medical114Api);
+        handler = new MedicalServiceHandler(medicalService, handlerThread.getLooper());
 
         binder = new MedicalServiceBinder(this);
 
-        tempMap = new HashMap<>();
+
 
         Notification notification = NotificationUtil.generateNotification("Medical Dealer BGService is running");
         startForeground(notificationId, notification);
@@ -116,58 +119,32 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
 
     @Override
     public void setTemp(String key, String tempValue) {
-        tempMap.put(key, tempValue);
+        medicalService.setTemp(key, tempValue);
     }
 
     @Override
     public String getTemp(String key) {
-        return tempMap.get(key);
+        return medicalService.getTemp(key);
     }
 
     @Override
     public void clearTemp(boolean clearContact) {
-        if (clearContact) {
-            tempMap.remove(Constants.key_intent_selected_contact_id);
-        } else {
-            String contactId = tempMap.get(Constants.key_intent_selected_contact_id);
-            tempMap.clear();
-            if (contactId != null) {
-                tempMap.put(Constants.key_intent_selected_contact_id, contactId);
-            }
-        }
+        medicalService.clearTemp(clearContact);
     }
 
     @Override
     public Doctor getDoctorById(String doctorId) {
-        Doctor doctor = null;
-        if (medicalService.getMedicalData() != null) {
-            Medical medical = medicalService.getMedicalData();
-            Hospital hospital = null;
-            String selectHospitalId = tempMap.get(Constants.key_intent_selected_hospital_id);
-            for (Hospital h : medical.getHospitalList()) {
-                if (h.getId().equals(selectHospitalId)) {
-                    hospital = h;
-                    break;
-                }
-            }
-            if (hospital != null) {
-                Department department = null;
-                String departmentId = tempMap.get(Constants.key_intent_selected_department_id);
-                for (Department d : hospital.getDepartmentList()) {
-                    if (d.getId().equals(departmentId)) {
-                        department = d;
-                        break;
-                    }
-                }
-                for (Doctor d : department.getDoctorList()) {
-                    if (d.getId().equals(doctorId)) {
-                        doctor = d;
-                        break;
-                    }
-                }
-            }
-        }
-        return doctor;
+        return medicalService.getDoctorById(doctorId);
+    }
+
+    @Override
+    public String getNextExpertDoctorId() {
+        return medicalService.getNextExpertDoctorId();
+    }
+
+    @Override
+    public boolean isExpertDoctor(Doctor doctor) {
+        return medicalService.isExpertDoctor(doctor.getId());
     }
 
     @Override
@@ -189,6 +166,22 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
         Message message = handler.obtainMessage();
         message.what = ListMedicalResource.ordinal();
         message.obj = new Object[]{hospitalId, departmentId, date, amPm, callback};
+        handler.sendMessage(message);
+    }
+
+    @Override
+    public void start(TargetDate targetDate, Consumer<HandleResult> stepCallback) {
+        Message message = handler.obtainMessage();
+        message.what = CommitTheDealer.ordinal();
+        message.obj = new Object[]{targetDate, stepCallback};
+        handler.sendMessage(message);
+    }
+
+    @Override
+    public void submitVerifyCode(String verifyCode, Consumer<HandleResult> stepCallback) {
+        Message message = handler.obtainMessage();
+        message.what = CommitVerifyCode.ordinal();
+        message.obj = new Object[]{verifyCode, stepCallback};
         handler.sendMessage(message);
     }
 }

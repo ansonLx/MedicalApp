@@ -4,12 +4,16 @@
 
     <string name="activity_label_login">114 User</string>
     <string name="activity_label_contact">选择用户</string>
+    <string name="activity_label_contact_create">创建用户</string>
     <string name="activity_label_contact_edit">编辑用户</string>
     <string name="activity_label_hospital">选择医院</string>
+    <string name="activity_label_hospital_create">创建医院</string>
     <string name="activity_label_hospital_edit">编辑医院</string>
     <string name="activity_label_department">选择科室</string>
+    <string name="activity_label_department_create">创建科室</string>
     <string name="activity_label_department_edit">编辑科室</string>
     <string name="activity_label_doctor">选择医生</string>
+    <string name="activity_label_doctor_create">创建医生</string>
     <string name="activity_label_doctor_edit">编辑医生</string>
 
     <string name="medical_service_notification_text">Medical Dealer Service Is Running</string>
@@ -68,6 +72,8 @@
     <string name="doctor_info_unknow">未选择</string>
     <string name="doctor_create">创建医生</string>
     <string name="doctor_save">保存医生</string>
+    <string name="doctor_add_skill">增加专长</string>
+    <string name="doctor_ex_title">专家</string>
 
     <!-- date picker -->
     <string name="date_picker_title">选择日期</string>
