@@ -45,7 +45,6 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
     private static HandlerThread handlerThread;
 
 
-
     private MedicalServiceBinder binder;
     private MedicalService medicalService;
 
@@ -59,7 +58,6 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
         handler = new MedicalServiceHandler(medicalService, handlerThread.getLooper());
 
         binder = new MedicalServiceBinder(this);
-
 
 
         Notification notification = NotificationUtil.generateNotification("Medical Dealer BGService is running");
@@ -179,9 +177,14 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
 
     @Override
     public void submitVerifyCode(String verifyCode, Consumer<HandleResult> stepCallback) {
-        Message message = handler.obtainMessage();
-        message.what = CommitVerifyCode.ordinal();
-        message.obj = new Object[]{verifyCode, stepCallback};
-        handler.sendMessage(message);
+        if (medicalService.getTemp(Constants.temp_submiting) == null) {
+            medicalService.setTemp(Constants.temp_submiting, "true");
+            Message message = handler.obtainMessage();
+            message.what = CommitVerifyCode.ordinal();
+            message.obj = new Object[]{verifyCode, stepCallback};
+            handler.sendMessage(message);
+        } else {
+            LogUtil.log("commit is running in BG service");
+        }
     }
 }

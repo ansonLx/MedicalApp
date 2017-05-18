@@ -2,14 +2,17 @@ package anson.std.medical.dealer.service.impl;
 
 import android.util.Base64;
 
+import com.alibaba.fastjson.JSON;
+
 import java.io.File;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -22,6 +25,7 @@ import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.HandleResult;
 import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.Medical114Api;
+import anson.std.medical.dealer.model.CommitSuccess;
 import anson.std.medical.dealer.model.Department;
 import anson.std.medical.dealer.model.Doctor;
 import anson.std.medical.dealer.model.Hospital;
@@ -51,7 +55,7 @@ public class MedicalServiceImpl implements MedicalService {
 
     public MedicalServiceImpl(Medical114Api medical114Api) {
         this.medical114Api = medical114Api;
-        tempMap = new HashMap<>();
+        tempMap = new ConcurrentHashMap<>();
     }
 
     public boolean isDataLoaded() {
@@ -243,6 +247,30 @@ public class MedicalServiceImpl implements MedicalService {
 
     @Override
     public void doAsADealer(TargetDate targetDate, Consumer<HandleResult> stepCallback) {
+        boolean validPass = false;
+        HandleResult validResult = new HandleResult();
+        if (targetDate == null) {
+            validResult.setMessage("target date is null");
+            validPass = true;
+        }
+        if (!tempMap.containsKey(Constants.key_intent_selected_doctor_id)) {
+            validResult.setMessage("doctorId is null");
+            validPass = true;
+        }
+        if (!tempMap.containsKey(Constants.key_intent_selected_contact_id)) {
+            validResult.setMessage("contact id is null");
+            validPass = true;
+        }
+        if (validPass) {
+            stepCallback.apply(validResult);
+            return;
+        }
+        LogUtil.logView("start dealer! date -> {}", targetDate.getDateStr());
+        HandleResult startResult = new HandleResult();
+        startResult.setMessage("start dealer!");
+        startResult.setOccurError(false);
+        stepCallback.apply(startResult);
+
         String date = targetDate.getDateStr();
         Boolean time = null;
         if (!targetDate.isIfFullDay()) {
@@ -326,25 +354,38 @@ public class MedicalServiceImpl implements MedicalService {
         resource.setVerifyCode(verifyCode);
         resource.setDutySourceId(sourceId);
 
-        MResponse mResponse = medical114Api.commit(resource);
-        HandleResult result = new HandleResult();
-        if (mResponse == null) {
-            LogUtil.log("commit occur http exception");
-            result.setMessage("commit occur http exception! try again");
-            result.setOccurError(false);
-            stepCallback.apply(result);
-            submit(verifyCode, stepCallback);
-        } else if (mResponse.getCode() != 200 && tempMap.containsKey(Constants.temp_doctor_expert)) {
-            LogUtil.log("commit failure, code -> {} data -> {}", mResponse.getCode(), mResponse.getData());
-            LogUtil.log("is expert doctor, will try again");
-            result.setOccurError(true);
-            result.setMessage("commit failure and is expert doctor, will try again!! code -> " + mResponse.getCode() + " data -> " + mResponse.getData());
-            stepCallback.apply(result);
-        } else {
-            result.setOccurError(false);
-            result.setMessage("commit finish. result is [" + mResponse.getData() + "]");
-            stepCallback.apply(result);
-            LogUtil.log("commit finish code -> {} data -> {}", mResponse.getCode(), mResponse.getData());
+        LogUtil.log("receive verify code start to lastest commit -> {}", verifyCode);
+        HandleResult startResult = new HandleResult();
+        startResult.setMessage("committing...");
+        stepCallback.apply(startResult);
+        try{
+            MResponse mResponse = medical114Api.commit(resource);
+            HandleResult result = new HandleResult();
+            if (mResponse == null) {
+                LogUtil.log("commit occur http exception");
+                result.setMessage("commit occur http exception! try again");
+                result.setOccurError(false);
+                stepCallback.apply(result);
+                submit(verifyCode, stepCallback);
+            } else if (mResponse.getCode() != 200 && tempMap.containsKey(Constants.temp_doctor_expert)) {
+                LogUtil.log("commit failure, code -> {} msg -> {} data -> {}", mResponse.getCode(), mResponse.getMsg(), mResponse.getData());
+                LogUtil.log("is expert doctor, will try again");
+                result.setOccurError(true);
+                result.setMessage("commit failure and is expert doctor, will try again!! code -> " + mResponse.getCode() + " data -> " + mResponse.getData());
+                stepCallback.apply(result);
+            } else {
+                clearTemp(true);
+                clearTemp(false);
+                result.setOccurError(false);
+                CommitSuccess commitSuccess = JSON.parseArray(mResponse.getData(), CommitSuccess.class).get(0);
+                result.setMessage("Success!! " + commitSuccess.toString());
+                result.setCommitFinish(true);
+                stepCallback.apply(result);
+                LogUtil.log("commit finish code -> {} msg -> {} data -> {}", mResponse.getCode(), mResponse.getMsg(), mResponse.getData());
+                LogUtil.logView("Success!! {}", commitSuccess.toString());
+            }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 

@@ -20,7 +20,7 @@ public class HttpRequestBuilder {
 
     private boolean doInput = true;
     private boolean doOutput = true;
-    private boolean useCaches = true;
+    private boolean useCaches = false;
     private int connectionTimeout = default_timeout;
     private int readTime = default_timeout;
     private boolean needReadBody = true;
@@ -29,6 +29,7 @@ public class HttpRequestBuilder {
     private String method;
     private HttpHeaderStore httpHeaderStore;
     private List<NameValuePair> specifiedHeaders;
+    private List<String> excludeHeaders;
     private List<NameValuePair> parameters;
 
     private HttpRequestBuilder() {
@@ -42,8 +43,8 @@ public class HttpRequestBuilder {
             connection = (HttpURLConnection) targetUrl.openConnection();
             connection.setUseCaches(useCaches);
             connection.setDoInput(doInput);
-            connection.setDoOutput(doOutput);
             connection.setRequestMethod(method);
+            connection.setDoOutput(doOutput);
             connection.setConnectTimeout(connectionTimeout);
             connection.setReadTimeout(readTime);
         } catch (ProtocolException e) {
@@ -56,6 +57,7 @@ public class HttpRequestBuilder {
         httpRequest.setNeedReadBody(needReadBody);
         httpRequest.setHttpHeaderStore(httpHeaderStore);
         httpRequest.setSpecifiedHeaders(specifiedHeaders);
+        httpRequest.setExcludeHeaders(excludeHeaders);
         httpRequest.setParameters(parameters);
         httpRequest.setConnection(connection);
         return httpRequest;
@@ -115,6 +117,11 @@ public class HttpRequestBuilder {
         for (int i = 0; i < parameter.length; i++) {
             parameters.add(parameter[i]);
         }
+        return this;
+    }
+
+    public HttpRequestBuilder setExcludeHeaders(List<String> excludeHeaders){
+        this.excludeHeaders = excludeHeaders;
         return this;
     }
 }

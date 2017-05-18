@@ -20,14 +20,13 @@ public class HttpCommunicator {
         httpHeaderStore = new HttpHeaderStore();
     }
 
-    public HttpResponse post(String url, List<NameValuePair> extraHeaders, NameValuePair... parameters) {
+    public HttpResponse post(String url, List<NameValuePair> extraHeaders, List<String> excludeHeaders, NameValuePair... parameters) {
         HttpResponse response = null;
         HttpRequestBuilder connectionBuilder = HttpRequestBuilder.getDefaultBuilder(host + url, "POST")
+                .setSpecifiedHeaders(extraHeaders)
+                .setExcludeHeaders(excludeHeaders)
                 .setHttpHeaderStore(httpHeaderStore);
-        if (extraHeaders != null) {
-            connectionBuilder.setSpecifiedHeaders(extraHeaders);
-        }
-        if (parameters != null) {
+        if (parameters != null && parameters.length != 0) {
             connectionBuilder.addParameters(parameters);
         }
         HttpRequest httpRequest = connectionBuilder.build();
@@ -42,11 +41,11 @@ public class HttpCommunicator {
         return response;
     }
 
-    public HttpResponse get(String url, boolean needRead, List<NameValuePair> extraHeaders, NameValuePair... parameters) {
+    public HttpResponse get(String url, boolean needRead, List<NameValuePair> extraHeaders, List<String> excludeHeaders, NameValuePair... parameters) {
         HttpResponse response = null;
         StringBuilder urlBuilder = new StringBuilder(host);
         urlBuilder.append(url);
-        if (parameters != null) {
+        if (parameters != null && parameters.length != 0) {
             urlBuilder.append("?");
             for (int i = 0; i < parameters.length; i++) {
                 NameValuePair param = parameters[i];
@@ -56,11 +55,11 @@ public class HttpCommunicator {
         }
         HttpRequestBuilder connectionBuilder = HttpRequestBuilder
                 .getDefaultBuilder(urlBuilder.toString(), "GET")
+                .setDoOutput(false)
                 .setNeedReadbody(needRead)
+                .setSpecifiedHeaders(extraHeaders)
+                .setExcludeHeaders(excludeHeaders)
                 .setHttpHeaderStore(httpHeaderStore);
-        if (extraHeaders != null) {
-            connectionBuilder.setSpecifiedHeaders(extraHeaders);
-        }
         HttpRequest httpRequest = connectionBuilder.build();
         while (true) {
             try {

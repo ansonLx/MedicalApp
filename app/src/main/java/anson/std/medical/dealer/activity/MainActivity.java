@@ -60,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
     private String doctorId;
     private TargetDate targetDate;
 
+    private String lastVerifyCode;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         initAndroidPermissions();
@@ -86,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         bindService(bindIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
+
+
     }
 
     @Override
@@ -131,10 +135,22 @@ public class MainActivity extends AppCompatActivity {
 
     public void start(View view) {
         if (targetDate != null) {
-            LogUtil.logView("start!");
-            medicalService.start(targetDate, getDealerStepCallback());
-            Button button = (Button) view;
-            button.setActivated(false);
+            medicalService.start(targetDate, new Consumer<HandleResult>() {
+                @Override
+                public void apply(HandleResult handleResult) {
+                    Message message = handler.obtainMessage();
+                    Object[] os = new Object[2];
+                    os[0] = new Consumer<HandleResult>() {
+                        @Override
+                        public void apply(HandleResult result) {
+                            logToLogView(result.getMessage());
+                        }
+                    };
+                    os[1] = handleResult;
+                    message.obj = os;
+                    handler.sendMessage(message);
+                }
+            });
         }
     }
 
@@ -284,35 +300,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Consumer<HandleResult> getDealerStepCallback() {
-        return new Consumer<HandleResult>() {
-            @Override
-            public void apply(HandleResult handleResult) {
-                Message message = handler.obtainMessage();
-                Object[] os = new Object[2];
-                os[0] = new Consumer<HandleResult>() {
-                    @Override
-                    public void apply(HandleResult result) {
-                        logToLogView(result.getMessage());
-                        if (result.isOccurError()) {
-                            medicalService.start(targetDate, getDealerStepCallback());
-                        }
-                    }
-                };
-                os[1] = handleResult;
-                message.obj = os;
-                handler.sendMessage(message);
-            }
-        };
-    }
-
     private void logToLogView(String message) {
         if (message != null) {
-            logView.append(message.trim() + "\n");
-            int textHeight = logView.getLineHeight() * logView.getLineCount();
-            int height = logView.getHeight();
+            TextView view = (TextView) findViewById(R.id.log_view);
+            view.append(message.trim() + "\n");
+            int textHeight = view.getLineHeight() * view.getLineCount();
+            int height = view.getHeight();
             if (textHeight > height) {
-                logView.scrollTo(0, textHeight - height);
+                view.scrollTo(0, textHeight - height);
             }
         }
     }
@@ -326,20 +321,56 @@ public class MainActivity extends AppCompatActivity {
         getContentResolver().unregisterContentObserver(smsObserver);
     }
 
+    private void receiveVerifyCode(String verifyCode) {
+        logToLogView("receive verify code -> " + verifyCode);
+        medicalService.submitVerifyCode(verifyCode, new Consumer<HandleResult>() {
+            @Override
+            public void apply(HandleResult result) {
+                Message logViewMsg = handler.obtainMessage();
+                logViewMsg.obj = new Object[]{new Consumer<HandleResult>() {
+                    @Override
+                    public void apply(HandleResult result) {
+                        logToLogView(result.getMessage());
+                    }
+                }, result};
+                handler.sendMessage(logViewMsg);
+            }
+        });
+    }
+
     private void readUnread114Sms() {
-        String[] projection = new String[]{"address", "body", "read"};
-        Cursor cursor = getContentResolver().query(content_sms, projection, "address='114' and read='0'", null, "date desc");
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                String body = cursor.getColumnName(cursor.getColumnIndex("body"));
-                Matcher matcher = pattern.matcher(body.trim());
-                if (matcher.find()) {
-                    String verifyCode = matcher.group();
-                    LogUtil.log("receive verify code -> {}", verifyCode);
-                    logToLogView("receive verify cod -> " + verifyCode);
-                    medicalService.submitVerifyCode(verifyCode, getDealerStepCallback());
+        if (lastVerifyCode == null && medicalService.getTemp(Constants.temp_submiting) == null) {
+            String[] projection = new String[]{"address", "body", "read"};
+            Cursor cursor = getContentResolver().query(content_sms, projection, "address='114' and read='0'", null, "date desc");
+            if (cursor != null) {
+                if (cursor.moveToNext()) {
+                    String body = cursor.getString(cursor.getColumnIndex("body"));
+                    Matcher matcher = pattern.matcher(body.trim());
+                    if (matcher.find()) {
+                        String verifyCode = matcher.group();
+                        if (verifyCode.length() == 6) {
+                            LogUtil.log("receive verify code -> {}", verifyCode);
+                            if (lastVerifyCode == null && medicalService.getTemp(Constants.temp_submiting) == null) {
+                                lastVerifyCode = verifyCode;
+                                HandleResult handleResult = new HandleResult();
+                                handleResult.setMessage(verifyCode);
+                                Message viewMessage = handler.obtainMessage();
+                                viewMessage.obj = new Object[]{new Consumer<HandleResult>() {
+                                    @Override
+                                    public void apply(HandleResult result) {
+                                        receiveVerifyCode(result.getMessage());
+                                    }
+                                }, handleResult};
+                                handler.sendMessage(viewMessage);
+                            } else {
+                                LogUtil.log("commit is running lastVerifyCode -> {} temp -> {}", lastVerifyCode, medicalService.getTemp(Constants.temp_submiting));
+                            }
+                        }
+                    }
                 }
             }
+        } else {
+            LogUtil.log("commit is running lastVerifyCode -> {} temp -> {}", lastVerifyCode, medicalService.getTemp(Constants.temp_submiting));
         }
     }
 

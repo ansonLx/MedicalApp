@@ -45,8 +45,13 @@ public class HttpHeaderStore {
         }
     }
 
-    public void setRequestToConnection(URLConnection connection) {
+    public void setRequestToConnection(URLConnection connection, List<String> excludeHeaders) {
         for (String key : headersMap.keySet()) {
+            if(excludeHeaders != null){
+                if(excludeHeaders.contains(key)){
+                    continue;
+                }
+            }
             String value = headersMap.get(key);
             connection.setRequestProperty(key, value);
         }

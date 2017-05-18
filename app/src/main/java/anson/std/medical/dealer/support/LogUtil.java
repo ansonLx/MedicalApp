@@ -124,7 +124,7 @@ public class LogUtil {
         public void handleMessage(Message message) {
             Object[] objects = (Object[]) message.obj;
             String msg = (String) objects[0];
-            Object[] param = (String[]) objects[1];
+            Object[] param = (Object[]) objects[1];
             boolean isView = (boolean) objects[2];
             boolean isWriteFile = (boolean) objects[3];
             long timeMillis = (long) objects[4];

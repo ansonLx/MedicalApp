@@ -24,4 +24,5 @@ public class Constants {
 
     public static final String doctor_skill_split_str = ";";
     public static final String temp_doctor_expert = "anson.std.medical.dealer.exDoctor";
+    public static final String temp_submiting = "anson.std.medical.dealer.submiting";
 }

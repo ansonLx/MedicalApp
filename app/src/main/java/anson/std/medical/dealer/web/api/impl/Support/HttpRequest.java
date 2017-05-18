@@ -19,6 +19,7 @@ public class HttpRequest {
     private List<NameValuePair> parameters;
     private HttpHeaderStore httpHeaderStore;
     private List<NameValuePair> specifiedHeaders;
+    private List<String> excludeHeaders;
     private boolean needReadBody;
 
     HttpRequest() {
@@ -27,7 +28,7 @@ public class HttpRequest {
     public HttpResponse request() throws IOException {
         HttpResponse response = null;
         try {
-            httpHeaderStore.setRequestToConnection(connection);
+            httpHeaderStore.setRequestToConnection(connection, excludeHeaders);
             if (specifiedHeaders != null) {
                 for (NameValuePair header : specifiedHeaders) {
                     connection.setRequestProperty(header.getName(), header.getValue());
@@ -45,6 +46,8 @@ public class HttpRequest {
                 OutputStream outputStream = connection.getOutputStream();
                 outputStream.write(contentBytes);
                 outputStream.flush();
+            } else {
+                connection.setRequestProperty("Content-Length", "0");
             }
             connection.connect();
             response = readResponse(connection);
@@ -53,7 +56,7 @@ public class HttpRequest {
             e.printStackTrace();
             throw e;
         } finally {
-            if(connection != null){
+            if (connection != null) {
                 connection.disconnect();
             }
         }
@@ -116,5 +119,13 @@ public class HttpRequest {
 
     public void setNeedReadBody(boolean needReadBody) {
         this.needReadBody = needReadBody;
+    }
+
+    public List<String> getExcludeHeaders() {
+        return excludeHeaders;
+    }
+
+    public void setExcludeHeaders(List<String> excludeHeaders) {
+        this.excludeHeaders = excludeHeaders;
     }
 }

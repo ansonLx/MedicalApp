@@ -36,7 +36,7 @@ public class Medical114ApiImpl implements Medical114Api {
 
     @Override
     public boolean login(String userName, String pwd) {
-        HttpResponse response = httpCommunicator.post(loginUrl, null,
+        HttpResponse response = httpCommunicator.post(loginUrl, null, null,
                 new NameValuePair("mobileNo", userName),
                 new NameValuePair("yzm", ""),
                 new NameValuePair("isAjax", "true"),
@@ -82,9 +82,9 @@ public class Medical114ApiImpl implements Medical114Api {
         StringBuilder urlBuilder = new StringBuilder(confirmUrl);
         urlBuilder.append(hospitalId).append("-").append(departmentId).append("-")
                 .append(doctorId).append("-").append(sourceId).append(".htm");
-        while (true){
-            HttpResponse response = httpCommunicator.get(urlBuilder.toString(), false, header);
-            if(response.getResponseCode() == 200){
+        while (true) {
+            HttpResponse response = httpCommunicator.get(urlBuilder.toString(), false, header, Arrays.asList("Origin", "X-Requested-With"));
+            if (response.getResponseCode() == 200) {
                 break;
             }
         }
@@ -96,7 +96,7 @@ public class Medical114ApiImpl implements Medical114Api {
         refererHeaderBuilder.append("/order/confirm/").append(hospitalId).append("-").append(departmentId)
                 .append("-").append(doctorId).append("-").append(sourceId).append(".htm");
         List<NameValuePair> header = Arrays.asList(new NameValuePair(referer_header, refererHeaderBuilder.toString()));
-        HttpResponse httpResponse = httpCommunicator.post(orderSMSUrl, header);
+        HttpResponse httpResponse = httpCommunicator.post(orderSMSUrl, header, null);
         return httpResponse.getResponseCode() == 200;
     }
 
@@ -115,7 +115,7 @@ public class Medical114ApiImpl implements Medical114Api {
         refererHeaderBuilder.append("/order/confirm/").append(hospitalId).append("-")
                 .append(departmentId).append("-").append(doctorId).append("-").append(sourceId).append(".htm");
         List<NameValuePair> header = Arrays.asList(new NameValuePair(referer_header, refererHeaderBuilder.toString()));
-        HttpResponse httpResponse = httpCommunicator.post(orderUrl, header,
+        HttpResponse httpResponse = httpCommunicator.post(orderUrl, header, null,
                 new NameValuePair("dutySourceId", Long.toString(sourceId)),
                 new NameValuePair("hospitalId", hospitalId),
                 new NameValuePair("departmentId", departmentId),
@@ -143,7 +143,7 @@ public class Medical114ApiImpl implements Medical114Api {
         StringBuilder refererHeaderBuilder = new StringBuilder(medical_host);
         refererHeaderBuilder.append("/dpt/appoint/").append(hospitalId).append("-").append(departmentId).append(".htm");
         List<NameValuePair> header = Arrays.asList(new NameValuePair(referer_header, refererHeaderBuilder.toString()));
-        HttpResponse httpResponse = httpCommunicator.post(queryDutyUrl, header,
+        HttpResponse httpResponse = httpCommunicator.post(queryDutyUrl, header, null,
                 new NameValuePair("hospitalId", hospitalId),
                 new NameValuePair("departmentId", departmentId),
                 new NameValuePair("dutyCode", dateCode),
