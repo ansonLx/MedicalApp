@@ -28,6 +28,8 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
     private List<DataOnItem> dataList;
     private Method getShowNameMethod;
     private int checkedColor;
+    private int checkedTextColor;
+    private Integer orgTextColor;
     private Consumer<T> editCallback;
     private Consumer<T> delCallback;
 
@@ -44,7 +46,8 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
             }
         }
         this.getShowNameMethod = getShowNameMethod;
-        this.checkedColor = context.getResources().getColor(R.color.colorAccent, null);
+        this.checkedColor = context.getResources().getColor(R.color.list_selected, null);
+        this.checkedTextColor = context.getResources().getColor(R.color.list_selected_text, null);
         this.editCallback = editCallback;
         this.delCallback = delCallback;
     }
@@ -63,26 +66,29 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
 
     @Override
     public int getCount() {
-        System.out.println("call get count");
         return dataList.size();
     }
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-        System.out.println("call get view");
         final DataOnItem itemData = dataList.get(position);
         itemData.position = position;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(resource, null);
         }
         TextView nameView = (TextView) convertView.findViewById(R.id.contact_name_view);
+        if (orgTextColor == null) {
+            orgTextColor = nameView.getCurrentTextColor();
+        }
         try {
             nameView.setText((String) getShowNameMethod.invoke(itemData.data));
             itemData.nameView = convertView;
             if (itemData.isCheck) {
                 convertView.setBackgroundColor(checkedColor);
+                nameView.setTextColor(checkedTextColor);
             } else {
                 convertView.setBackgroundColor(Color.TRANSPARENT);
+                nameView.setTextColor(orgTextColor);
             }
         } catch (IllegalAccessException e) {
             e.printStackTrace();
@@ -116,20 +122,24 @@ public class MedicalListViewArrayAdapter<T> extends ArrayAdapter {
     public String onItemClick(View itemView) {
         String checkedName = "";
         try {
+            TextView nameView = (TextView) itemView.findViewById(R.id.contact_name_view);
             DataOnItem itemData = (DataOnItem) itemView.getTag();
 
             for (DataOnItem data : dataList) {
-                if (data.position == itemData.position) {
-                    itemData.isCheck = !itemData.isCheck;
-                } else {
-                    data.isCheck = false;
-                }
                 if (data.nameView != null) {
+                    if (data.position == itemData.position) {
+                        itemData.isCheck = !itemData.isCheck;
+                    } else {
+                        data.isCheck = false;
+                    }
                     data.nameView.setBackgroundColor(Color.TRANSPARENT);
+                    TextView name = (TextView) data.nameView.findViewById(R.id.contact_name_view);
+                    name.setTextColor(orgTextColor);
                 }
             }
             if (itemData.isCheck) {
                 itemView.setBackgroundColor(checkedColor);
+                nameView.setTextColor(checkedTextColor);
                 checkedName = (String) getShowNameMethod.invoke(itemData.data);
             }
         } catch (IllegalAccessException e) {

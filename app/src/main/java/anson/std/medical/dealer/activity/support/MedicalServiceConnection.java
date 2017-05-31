@@ -23,7 +23,6 @@ public class MedicalServiceConnection implements ServiceConnection {
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        LogUtil.log(name + " BG service connected");
         onConnectedCallback.apply(((MedicalServiceBinder) service).getMedicalService());
     }
 

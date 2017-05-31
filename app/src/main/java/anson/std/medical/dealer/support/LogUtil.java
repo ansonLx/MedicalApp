@@ -70,7 +70,7 @@ public class LogUtil {
         log(msg, null, true, default_wirte);
     }
 
-    public static void logView(String msg, Object[] param){
+    public static void logView(String msg, Object... param){
         log(msg, param, true, default_wirte);
     }
 
@@ -124,7 +124,7 @@ public class LogUtil {
         public void handleMessage(Message message) {
             Object[] objects = (Object[]) message.obj;
             String msg = (String) objects[0];
-            Object[] param = (String[]) objects[1];
+            Object[] param = (Object[]) objects[1];
             boolean isView = (boolean) objects[2];
             boolean isWriteFile = (boolean) objects[3];
             long timeMillis = (long) objects[4];
@@ -133,7 +133,7 @@ public class LogUtil {
 
             // show log
             if (isView) {
-                Toast.makeText(context, msg, toast_show_time).show();
+                Toast.makeText(context, logString, toast_show_time).show();
             }
 
             // log to consul

@@ -4,6 +4,7 @@ import java.util.List;
 
 import anson.std.medical.dealer.model.MedicalResource;
 import anson.std.medical.dealer.web.api.impl.DoctorFilter;
+import anson.std.medical.dealer.web.api.impl.MResponse;
 
 /**
  * Created by anson on 17-5-9.
@@ -17,6 +18,8 @@ public interface Medical114Api {
 
     MedicalResource getMedicalResource(String hospitalId, String departmentId, String doctorId, String date, Boolean amPm, DoctorFilter doctorFilter);
 
+    void sendGetRequestBeforeSendVerifySms(String hospitalId, String departmentId, String doctorId, long sourceId);
+
     boolean sendVerifySms(String hospitalId, String departmentId, String doctorId, long sourceId);
 
     /**
@@ -25,5 +28,5 @@ public interface Medical114Api {
      * @param medicalResource
      * @return if success return order number otherwise null
      */
-    String commit(MedicalResource medicalResource);
+    MResponse commit(MedicalResource medicalResource);
 }

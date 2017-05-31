@@ -1,10 +1,8 @@
 package anson.std.medical.dealer.service.impl;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Base64;
+
+import com.alibaba.fastjson.JSON;
 
 import java.io.File;
 import java.security.InvalidKeyException;
@@ -12,6 +10,9 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -22,35 +23,43 @@ import javax.crypto.spec.DESKeySpec;
 
 import anson.std.medical.dealer.Consumer;
 import anson.std.medical.dealer.HandleResult;
-import anson.std.medical.dealer.MedicalApplication;
 import anson.std.medical.dealer.MedicalService;
 import anson.std.medical.dealer.Medical114Api;
+import anson.std.medical.dealer.model.CommitSuccess;
+import anson.std.medical.dealer.model.Department;
+import anson.std.medical.dealer.model.Doctor;
+import anson.std.medical.dealer.model.Hospital;
 import anson.std.medical.dealer.model.Medical;
 import anson.std.medical.dealer.model.MedicalResource;
 import anson.std.medical.dealer.model.Patient;
+import anson.std.medical.dealer.model.TargetDate;
 import anson.std.medical.dealer.support.Constants;
 import anson.std.medical.dealer.support.FileUtil;
 import anson.std.medical.dealer.support.LogUtil;
+import anson.std.medical.dealer.web.api.impl.DoctorFilter;
+import anson.std.medical.dealer.web.api.impl.MResponse;
 
 /**
  * Created by anson on 17-5-9.
  */
 
 public class MedicalServiceImpl implements MedicalService {
-    private final static String encryKey = "adfjpzcxvkpadpfqreqwer_+)(*&()^*(";
+    private static final String encryKey = "adfjpzcxvkpadpfqreqwer_+)(*&()^*(";
+    public static final String expertPrefix = "ex_";
 
-    private Context context;
+    private Map<String, String> tempMap;
 
     private Medical114Api medical114Api;
     private Medical medical;
     private boolean isLogin;
+    private Consumer<HandleResult> stepCallback;
 
-    public MedicalServiceImpl(Context context, Medical114Api medical114Api) {
-        this.context = context;
+    public MedicalServiceImpl(Medical114Api medical114Api) {
         this.medical114Api = medical114Api;
+        tempMap = new ConcurrentHashMap<>();
     }
 
-    public boolean isDataLoaded(){
+    public boolean isDataLoaded() {
         return medical != null;
     }
 
@@ -94,7 +103,7 @@ public class MedicalServiceImpl implements MedicalService {
             deEncryptModel(medical);
             this.medical = medical;
             LogUtil.logView("write medical data to file success");
-            if(callback != null){
+            if (callback != null) {
                 HandleResult handleResult = new HandleResult();
                 handleResult.setOccurError(false);
                 handleResult.setMessage("write medical data to file success");
@@ -106,18 +115,118 @@ public class MedicalServiceImpl implements MedicalService {
     }
 
     @Override
+    public void setTemp(String key, String tempValue) {
+        tempMap.put(key, tempValue);
+    }
+
+    @Override
+    public String getTemp(String key) {
+        return tempMap.get(key);
+    }
+
+    @Override
+    public void clearTemp(boolean clearContact) {
+        if (clearContact) {
+            tempMap.remove(Constants.key_intent_selected_contact_id);
+        } else {
+            String contactId = tempMap.get(Constants.key_intent_selected_contact_id);
+            tempMap.clear();
+            if (contactId != null) {
+                tempMap.put(Constants.key_intent_selected_contact_id, contactId);
+            }
+        }
+    }
+
+    @Override
+    public Doctor getDoctorById(String doctorId) {
+        Doctor doctor = null;
+        if (medical != null) {
+            Hospital hospital = null;
+            String selectHospitalId = tempMap.get(Constants.key_intent_selected_hospital_id);
+            for (Hospital h : medical.getHospitalList()) {
+                if (h.getId().equals(selectHospitalId)) {
+                    hospital = h;
+                    break;
+                }
+            }
+            if (hospital != null) {
+                Department department = null;
+                String departmentId = tempMap.get(Constants.key_intent_selected_department_id);
+                for (Department d : hospital.getDepartmentList()) {
+                    if (d.getId().equals(departmentId)) {
+                        department = d;
+                        break;
+                    }
+                }
+                for (Doctor d : department.getDoctorList()) {
+                    if (d.getId().equals(doctorId)) {
+                        doctor = d;
+                        break;
+                    }
+                }
+            }
+        }
+        return doctor;
+    }
+
+    @Override
+    public String getNextExpertDoctorId() {
+        String exDoctorId = null;
+        if (medical != null) {
+            List<Hospital> hospitalList = medical.getHospitalList();
+            if (hospitalList != null) {
+                for (Hospital hospital : hospitalList) {
+                    List<Department> departmentList = hospital.getDepartmentList();
+                    if (departmentList != null) {
+                        for (Department department : departmentList) {
+                            List<Doctor> doctorList = department.getDoctorList();
+                            if (doctorList != null) {
+                                for (Doctor doctor : doctorList) {
+                                    if (isExpertDoctor(doctor.getId())) {
+                                        if (exDoctorId == null) {
+                                            exDoctorId = doctor.getId();
+                                        } else {
+                                            int exNum = Integer.parseInt(exDoctorId.replace(expertPrefix, ""));
+                                            int doctorIdNum = Integer.parseInt(doctor.getId().replace(expertPrefix, ""));
+                                            if (doctorIdNum > exNum) {
+                                                exDoctorId = doctor.getId();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (exDoctorId == null) {
+            exDoctorId = expertPrefix + 1;
+        } else {
+            int exNum = Integer.parseInt(exDoctorId.replace(expertPrefix, ""));
+            exDoctorId = expertPrefix + (exNum + 1);
+        }
+        return exDoctorId;
+    }
+
+    @Override
+    public boolean isExpertDoctor(String doctorId) {
+        return doctorId.startsWith(expertPrefix);
+    }
+
+    @Override
     public Medical getMedicalData() {
         return medical;
     }
 
     @Override
-    public boolean isLogin114(){
+    public boolean isLogin114() {
         return isLogin;
     }
 
     @Override
     public void login114() {
-        if(!isLogin){
+        if (!isLogin) {
             isLogin = medical114Api.login(medical.getUserName(), medical.getPwd());
             if (isLogin) {
                 LogUtil.logView("114 login success");
@@ -135,6 +244,151 @@ public class MedicalServiceImpl implements MedicalService {
         HandleResult handleResult = new HandleResult();
         handleResult.setResourceList(medicalResources);
         callback.apply(handleResult);
+    }
+
+    @Override
+    public void doAsADealer(TargetDate targetDate, Consumer<HandleResult> stepCallback) {
+        boolean validPass = false;
+        HandleResult validResult = new HandleResult();
+        if (targetDate == null) {
+            validResult.setMessage("target date is null");
+            validPass = true;
+        }
+        if (!tempMap.containsKey(Constants.key_intent_selected_doctor_id)) {
+            validResult.setMessage("doctorId is null");
+            validPass = true;
+        }
+        if (!tempMap.containsKey(Constants.key_intent_selected_contact_id)) {
+            validResult.setMessage("contact id is null");
+            validPass = true;
+        }
+        if (validPass) {
+            stepCallback.apply(validResult);
+            return;
+        }
+        LogUtil.logView("start dealer! date -> {}", targetDate.getDateStr());
+        this.stepCallback = stepCallback;
+        HandleResult startResult = new HandleResult();
+        startResult.setMessage("start dealer!");
+        startResult.setOccurError(false);
+        stepCallback.apply(startResult);
+
+        String date = targetDate.getDateStr();
+        Boolean time = null;
+        if (!targetDate.isIfFullDay()) {
+            time = targetDate.isAmPm();
+        }
+        String hospitalId = tempMap.get(Constants.key_intent_selected_hospital_id);
+        String departmentId = tempMap.get(Constants.key_intent_selected_department_id);
+        String doctorId = tempMap.get(Constants.key_intent_selected_doctor_id);
+        boolean isExpertDoctor = isExpertDoctor(doctorId);
+
+        DoctorFilter doctorFilter = null;
+        if (isExpertDoctor) {
+            Doctor doctor = getDoctorById(doctorId);
+            doctorId = null;
+            doctorFilter = new DoctorFilter();
+            String[] skills = doctor.getSkill().split(Constants.doctor_skill_split_str);
+            for (int i = 0; i < skills.length; i++) {
+                doctorFilter.add(skills[i]);
+            }
+            tempMap.put(Constants.temp_doctor_expert, "true");
+        }
+
+        // get medical resource
+        MedicalResource medicalResource = null;
+        int tryTimes = 1;
+        while (medicalResource == null) {
+            medicalResource = medical114Api.getMedicalResource(hospitalId, departmentId, doctorId, date, time, doctorFilter);
+            if (medicalResource == null) {
+                LogUtil.log("didn't find medical resource, try times -> {}", ++tryTimes);
+                HandleResult handleResult = new HandleResult();
+                handleResult.setOccurError(false);
+                handleResult.setMessage("try times " + tryTimes);
+                stepCallback.apply(handleResult);
+                try {
+                    Thread.currentThread().sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (isExpertDoctor) {
+            doctorId = medicalResource.getDoctorId();
+            tempMap.put(Constants.key_intent_selected_doctor_id, doctorId);
+        }
+        long sourceId = medicalResource.getDutySourceId();
+        tempMap.put(Constants.key_intent_got_source_id, Long.toString(sourceId));
+        LogUtil.log("get medical resource success, sourceId -> {} available -> {}", sourceId, medicalResource.getRemainAvailableNumber());
+        HandleResult gotResourceResult = new HandleResult();
+        gotResourceResult.setOccurError(false);
+        gotResourceResult.setMessage("got resource!! Available -> " + medicalResource.getRemainAvailableNumber());
+        stepCallback.apply(gotResourceResult);
+
+        // sent verify code
+        medical114Api.sendGetRequestBeforeSendVerifySms(hospitalId, departmentId, doctorId, sourceId);
+        boolean sentFlag = medical114Api.sendVerifySms(hospitalId, departmentId, doctorId, sourceId);
+        LogUtil.log("verify code sent finish, sent result -> {}", sentFlag);
+
+        String sentResultMsg = "verify code sent result -> " + sentFlag;
+        if (!sentFlag) {
+            sentResultMsg += " try it again now!!";
+        }
+        HandleResult sentResult = new HandleResult();
+        sentResult.setOccurError(!sentFlag);
+        sentResult.setMessage(sentResultMsg);
+        stepCallback.apply(sentResult);
+    }
+
+    @Override
+    public void submit(String verifyCode) {
+        String hospitalId = tempMap.get(Constants.key_intent_selected_hospital_id);
+        String departmentId = tempMap.get(Constants.key_intent_selected_department_id);
+        String doctorId = tempMap.get(Constants.key_intent_selected_doctor_id);
+        String patientId = tempMap.get(Constants.key_intent_selected_contact_id);
+        long sourceId = Long.parseLong(tempMap.get(Constants.key_intent_got_source_id));
+        Patient patient = getPatient(patientId);
+        MedicalResource resource = new MedicalResource();
+        resource.setHospitalId(hospitalId);
+        resource.setDepartmentId(departmentId);
+        resource.setDoctorId(doctorId);
+        resource.setPatient(patient);
+        resource.setVerifyCode(verifyCode);
+        resource.setDutySourceId(sourceId);
+
+        LogUtil.log("receive verify code start to lastest commit -> {}", verifyCode);
+        HandleResult startResult = new HandleResult();
+        startResult.setMessage("start commit");
+        stepCallback.apply(startResult);
+        try {
+            MResponse mResponse = medical114Api.commit(resource);
+            HandleResult result = new HandleResult();
+            if (mResponse == null) {
+                LogUtil.log("commit occur http exception");
+                result.setMessage("commit occur http exception! try again");
+                result.setOccurError(false);
+                stepCallback.apply(result);
+                submit(verifyCode);
+            } else if (mResponse.getCode() != 200 && tempMap.containsKey(Constants.temp_doctor_expert)) {
+                LogUtil.log("commit failure, code -> {} msg -> {} data -> {}", mResponse.getCode(), mResponse.getMsg(), mResponse.getData());
+                LogUtil.log("is expert doctor, will try again");
+                result.setOccurError(true);
+                result.setMessage("commit failure and is expert doctor, will try again!! code -> " + mResponse.getCode() + " data -> " + mResponse.getData());
+                stepCallback.apply(result);
+            } else {
+                clearTemp(true);
+                clearTemp(false);
+                result.setOccurError(false);
+                CommitSuccess commitSuccess = JSON.parseArray(mResponse.getData(), CommitSuccess.class).get(0);
+                result.setMessage("Success!! " + commitSuccess.toString());
+                result.setCommitFinish(true);
+                stepCallback.apply(result);
+                LogUtil.log("commit finish code -> {} msg -> {} data -> {}", mResponse.getCode(), mResponse.getMsg(), mResponse.getData());
+                stepCallback = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void encryptModel(Medical medical) {
@@ -167,6 +421,18 @@ public class MedicalServiceImpl implements MedicalService {
                 }
             }
         }
+    }
+
+    private Patient getPatient(String patientId) {
+        if (patientId != null && medical != null) {
+            List<Patient> patientList = medical.getPatientList();
+            for (Patient patient : patientList) {
+                if (patient.getId().equals(patientId)) {
+                    return patient;
+                }
+            }
+        }
+        return null;
     }
 
     private String encryptString(String string) {

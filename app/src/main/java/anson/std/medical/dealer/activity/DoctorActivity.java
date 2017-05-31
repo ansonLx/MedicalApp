@@ -103,6 +103,7 @@ public class DoctorActivity extends AppCompatActivity {
             editDoctorId = startIntent.getStringExtra(Constants.key_intent_doctor_id);
             Button saveBtn = (Button) findViewById(R.id.doctor_create_btn);
             saveBtn.setText(R.string.doctor_save);
+            setTitle(R.string.activity_label_doctor_create);
         }
 
         medicalServiceConnection = new MedicalServiceConnection(new Consumer<MedicalForegroundService>() {
@@ -158,25 +159,40 @@ public class DoctorActivity extends AppCompatActivity {
                     }
                 }).build();
 
-        doctorSearchDatePicker = DatePicker.getInstance(this).setPickerCallback(new Consumer<List<TargetDate>>() {
-            @Override
-            public void apply(List<TargetDate> targetDates) {
-                if (!targetDates.isEmpty()) {
-                    searchDate = targetDates.get(0);
-                    doctorSearchView.setText(TargetDate.list2String(Arrays.asList(searchDate)));
+        doctorSearchDatePicker = DatePicker.getInstance(this).setShowWeek(true)
+                .setPickerCallback(new Consumer<List<TargetDate>>() {
+                    @Override
+                    public void apply(List<TargetDate> targetDates) {
+                        if (!targetDates.isEmpty()) {
+                            searchDate = targetDates.get(0);
+                            doctorSearchView.setText(TargetDate.list2String(Arrays.asList(searchDate)));
 
-                    // load from 114
-                    loadMedicalResource();
-                } else {
-                    searchDate = null;
-                    doctorSearchView.setText(R.string.doctor_search);
-                }
-            }
-        }).build();
+                            // load from 114
+                            loadMedicalResource();
+                        } else {
+                            searchDate = null;
+                            doctorSearchView.setText(R.string.doctor_search);
+                        }
+                    }
+                }).build();
     }
 
     private void initListView() {
-        medicalDoctorListViewAdapter = new MedicalDoctorListViewAdapter(this);
+        medicalDoctorListViewAdapter = new MedicalDoctorListViewAdapter(this, new Consumer<Doctor>() {
+            @Override
+            public void apply(Doctor doctor) {
+                String skill = doctorSkillView.getText().toString();
+                StringBuilder sb = new StringBuilder();
+                if (skill != null && !skill.trim().equals("") && !skill.equals(getString(R.string.doctor_info_unknow))) {
+                    sb.append(skill).append(Constants.doctor_skill_split_str);
+                }
+                String doctorSkill = doctor.getSkill();
+                if (doctorSkill != null && !doctorSkill.trim().equals("")) {
+                    sb.append(doctorSkill);
+                }
+                doctorSkillView.setText(sb.toString());
+            }
+        });
         searchListView.setAdapter(medicalDoctorListViewAdapter);
         searchListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -320,6 +336,11 @@ public class DoctorActivity extends AppCompatActivity {
             doctor = medicalForegroundService.getDoctorById(editDoctorId);
         } else {
             doctor = new Doctor();
+            if (doctorId.equals(getString(R.string.doctor_info_unknow))) {
+                doctorId = medicalForegroundService.getNextExpertDoctorId();
+                doctorTitle = getString(R.string.doctor_ex_title);
+            }
+            doctor.setId(doctorId);
             Hospital hospital = null;
             String selectedHospitalId = medicalForegroundService.getTemp(Constants.key_intent_selected_hospital_id);
             for (Hospital h : medical.getHospitalList()) {

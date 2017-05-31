@@ -8,6 +8,7 @@ import java.util.List;
 
 import anson.std.medical.dealer.Medical114Api;
 import anson.std.medical.dealer.model.MedicalResource;
+import anson.std.medical.dealer.support.LogUtil;
 import anson.std.medical.dealer.web.api.impl.Support.HttpCommunicator;
 import anson.std.medical.dealer.web.api.impl.Support.HttpResponse;
 import anson.std.medical.dealer.web.api.impl.Support.NameValuePair;
@@ -35,7 +36,7 @@ public class Medical114ApiImpl implements Medical114Api {
 
     @Override
     public boolean login(String userName, String pwd) {
-        HttpResponse response = httpCommunicator.post(loginUrl, null,
+        HttpResponse response = httpCommunicator.post(loginUrl, null, null,
                 new NameValuePair("mobileNo", userName),
                 new NameValuePair("yzm", ""),
                 new NameValuePair("isAjax", "true"),
@@ -72,7 +73,7 @@ public class Medical114ApiImpl implements Medical114Api {
     }
 
     @Override
-    public boolean sendVerifySms(String hospitalId, String departmentId, String doctorId, long sourceId) {
+    public void sendGetRequestBeforeSendVerifySms(String hospitalId, String departmentId, String doctorId, long sourceId) {
         StringBuilder refererHeaderBuilder = new StringBuilder(medical_host);
         refererHeaderBuilder.append("/dpt/appoint/").append(hospitalId).append("-").append(departmentId).append(".htm");
         List<NameValuePair> header = Arrays.asList(
@@ -81,18 +82,26 @@ public class Medical114ApiImpl implements Medical114Api {
         StringBuilder urlBuilder = new StringBuilder(confirmUrl);
         urlBuilder.append(hospitalId).append("-").append(departmentId).append("-")
                 .append(doctorId).append("-").append(sourceId).append(".htm");
-        httpCommunicator.get(urlBuilder.toString(), false, header);
+        while (true) {
+            HttpResponse response = httpCommunicator.get(urlBuilder.toString(), false, header, Arrays.asList("Origin", "X-Requested-With"));
+            if (response.getResponseCode() == 200) {
+                break;
+            }
+        }
+    }
 
-        refererHeaderBuilder = new StringBuilder(medical_host);
+    @Override
+    public boolean sendVerifySms(String hospitalId, String departmentId, String doctorId, long sourceId) {
+        StringBuilder refererHeaderBuilder = new StringBuilder(medical_host);
         refererHeaderBuilder.append("/order/confirm/").append(hospitalId).append("-").append(departmentId)
                 .append("-").append(doctorId).append("-").append(sourceId).append(".htm");
-        header = Arrays.asList(new NameValuePair(referer_header, refererHeaderBuilder.toString()));
-        HttpResponse httpResponse = httpCommunicator.post(orderSMSUrl, header);
+        List<NameValuePair> header = Arrays.asList(new NameValuePair(referer_header, refererHeaderBuilder.toString()));
+        HttpResponse httpResponse = httpCommunicator.post(orderSMSUrl, header, null);
         return httpResponse.getResponseCode() == 200;
     }
 
     @Override
-    public String commit(MedicalResource medicalResource) {
+    public MResponse commit(MedicalResource medicalResource) {
         String hospitalId = medicalResource.getHospitalId();
         String departmentId = medicalResource.getDepartmentId();
         String doctorId = medicalResource.getDoctorId();
@@ -106,7 +115,7 @@ public class Medical114ApiImpl implements Medical114Api {
         refererHeaderBuilder.append("/order/confirm/").append(hospitalId).append("-")
                 .append(departmentId).append("-").append(doctorId).append("-").append(sourceId).append(".htm");
         List<NameValuePair> header = Arrays.asList(new NameValuePair(referer_header, refererHeaderBuilder.toString()));
-        HttpResponse httpResponse = httpCommunicator.post(orderUrl, header,
+        HttpResponse httpResponse = httpCommunicator.post(orderUrl, header, null,
                 new NameValuePair("dutySourceId", Long.toString(sourceId)),
                 new NameValuePair("hospitalId", hospitalId),
                 new NameValuePair("departmentId", departmentId),
@@ -118,12 +127,11 @@ public class Medical114ApiImpl implements Medical114Api {
                 new NameValuePair("smsVerifyCode", verifyCode),
                 new NameValuePair("childrenBirthday", ""),
                 new NameValuePair("isAjax", "true"));
-
         MResponse mResponse = null;
         if (httpResponse.getResponseCode() == 200) {
             mResponse = convert2Medical(httpResponse);
         }
-        return mResponse.getData();
+        return mResponse;
     }
 
     private MResponse convert2Medical(HttpResponse response) {
@@ -135,7 +143,7 @@ public class Medical114ApiImpl implements Medical114Api {
         StringBuilder refererHeaderBuilder = new StringBuilder(medical_host);
         refererHeaderBuilder.append("/dpt/appoint/").append(hospitalId).append("-").append(departmentId).append(".htm");
         List<NameValuePair> header = Arrays.asList(new NameValuePair(referer_header, refererHeaderBuilder.toString()));
-        HttpResponse httpResponse = httpCommunicator.post(queryDutyUrl, header,
+        HttpResponse httpResponse = httpCommunicator.post(queryDutyUrl, header, null,
                 new NameValuePair("hospitalId", hospitalId),
                 new NameValuePair("departmentId", departmentId),
                 new NameValuePair("dutyCode", dateCode),
@@ -144,8 +152,14 @@ public class Medical114ApiImpl implements Medical114Api {
         List<MedicalResource> resourceList = new ArrayList<>();
         if (httpResponse.getResponseCode() == 200) {
             MResponse mResponse = convert2Medical(httpResponse);
-            String dataString = mResponse.getData();
-            resourceList = JSON.parseArray(dataString, MedicalResource.class);
+            if (mResponse.isHasErroe()) {
+                LogUtil.logView("fetch response error, code -> {} msg -> {}", mResponse.getCode(), mResponse.getMsg());
+            } else {
+                String dataString = mResponse.getData();
+                resourceList = JSON.parseArray(dataString, MedicalResource.class);
+            }
+        } else {
+            LogUtil.logView("fetch resource failure, code -> {} body -> {}", httpResponse.getResponseCode(), httpResponse.getResponseBody());
         }
         return resourceList;
     }
@@ -157,7 +171,7 @@ public class Medical114ApiImpl implements Medical114Api {
         }
         if (doctorId != null) {
             for (MedicalResource resource : medicalResources) {
-                if (resource.getDoctorId().equals(doctorId)) {
+                if (resource.getDoctorId().equals(doctorId) && resource.getRemainAvailableNumber() != 0) {
                     medicalResource = resource;
                     break;
                 }
@@ -165,7 +179,7 @@ public class Medical114ApiImpl implements Medical114Api {
         }
         if (medicalResource == null && filter != null) {
             for (MedicalResource resource : medicalResources) {
-                if (filter.doFilter(resource.getSkill())) {
+                if (resource.getRemainAvailableNumber() != 0 && filter.doFilter(resource.getSkill())) {
                     medicalResource = resource;
                     break;
                 }

@@ -16,6 +16,8 @@ public class HandleResult {
     private Medical medical;
     private List<MedicalResource> resourceList;
 
+    private boolean commitFinish;
+
     public boolean isOccurError() {
         return occurError;
     }
@@ -46,5 +48,13 @@ public class HandleResult {
 
     public void setResourceList(List<MedicalResource> resourceList) {
         this.resourceList = resourceList;
+    }
+
+    public boolean isCommitFinish() {
+        return commitFinish;
+    }
+
+    public void setCommitFinish(boolean commitFinish) {
+        this.commitFinish = commitFinish;
     }
 }
