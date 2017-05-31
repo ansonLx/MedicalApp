@@ -133,7 +133,7 @@ public class LogUtil {
 
             // show log
             if (isView) {
-                Toast.makeText(context, msg, toast_show_time).show();
+                Toast.makeText(context, logString, toast_show_time).show();
             }
 
             // log to consul

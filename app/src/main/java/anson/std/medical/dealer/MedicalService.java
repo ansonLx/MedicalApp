@@ -37,7 +37,7 @@ public interface MedicalService {
 
     void doAsADealer(TargetDate targetDate, Consumer<HandleResult> stepCallback);
 
-    void submit(String verifyCode, Consumer<HandleResult> stepCallback);
+    void submit(String verifyCode);
 
 }
 

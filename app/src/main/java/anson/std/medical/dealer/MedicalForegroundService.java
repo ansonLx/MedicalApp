@@ -34,5 +34,5 @@ public interface MedicalForegroundService {
 
     void start(TargetDate targetDate, Consumer<HandleResult> stepCallback);
 
-    void submitVerifyCode(String verifyCode, Consumer<HandleResult> stepCallback);
+    void submitVerifyCode(String verifyCode);
 }

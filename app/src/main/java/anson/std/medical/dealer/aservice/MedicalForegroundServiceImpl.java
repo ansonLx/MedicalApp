@@ -176,12 +176,13 @@ public class MedicalForegroundServiceImpl extends Service implements MedicalFore
     }
 
     @Override
-    public void submitVerifyCode(String verifyCode, Consumer<HandleResult> stepCallback) {
+    public void submitVerifyCode(String verifyCode) {
         if (medicalService.getTemp(Constants.temp_submiting) == null) {
             medicalService.setTemp(Constants.temp_submiting, "true");
+//            medicalService.setTemp(Constants.temp_verify_code_key_key_key, verifyCode);
             Message message = handler.obtainMessage();
             message.what = CommitVerifyCode.ordinal();
-            message.obj = new Object[]{verifyCode, stepCallback};
+            message.obj = verifyCode;
             handler.sendMessage(message);
         } else {
             LogUtil.log("commit is running in BG service");

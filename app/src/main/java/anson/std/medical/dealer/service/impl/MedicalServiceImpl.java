@@ -52,6 +52,7 @@ public class MedicalServiceImpl implements MedicalService {
     private Medical114Api medical114Api;
     private Medical medical;
     private boolean isLogin;
+    private Consumer<HandleResult> stepCallback;
 
     public MedicalServiceImpl(Medical114Api medical114Api) {
         this.medical114Api = medical114Api;
@@ -266,6 +267,7 @@ public class MedicalServiceImpl implements MedicalService {
             return;
         }
         LogUtil.logView("start dealer! date -> {}", targetDate.getDateStr());
+        this.stepCallback = stepCallback;
         HandleResult startResult = new HandleResult();
         startResult.setMessage("start dealer!");
         startResult.setOccurError(false);
@@ -339,7 +341,7 @@ public class MedicalServiceImpl implements MedicalService {
     }
 
     @Override
-    public void submit(String verifyCode, Consumer<HandleResult> stepCallback) {
+    public void submit(String verifyCode) {
         String hospitalId = tempMap.get(Constants.key_intent_selected_hospital_id);
         String departmentId = tempMap.get(Constants.key_intent_selected_department_id);
         String doctorId = tempMap.get(Constants.key_intent_selected_doctor_id);
@@ -356,9 +358,9 @@ public class MedicalServiceImpl implements MedicalService {
 
         LogUtil.log("receive verify code start to lastest commit -> {}", verifyCode);
         HandleResult startResult = new HandleResult();
-        startResult.setMessage("committing...");
+        startResult.setMessage("start commit");
         stepCallback.apply(startResult);
-        try{
+        try {
             MResponse mResponse = medical114Api.commit(resource);
             HandleResult result = new HandleResult();
             if (mResponse == null) {
@@ -366,7 +368,7 @@ public class MedicalServiceImpl implements MedicalService {
                 result.setMessage("commit occur http exception! try again");
                 result.setOccurError(false);
                 stepCallback.apply(result);
-                submit(verifyCode, stepCallback);
+                submit(verifyCode);
             } else if (mResponse.getCode() != 200 && tempMap.containsKey(Constants.temp_doctor_expert)) {
                 LogUtil.log("commit failure, code -> {} msg -> {} data -> {}", mResponse.getCode(), mResponse.getMsg(), mResponse.getData());
                 LogUtil.log("is expert doctor, will try again");
@@ -382,9 +384,9 @@ public class MedicalServiceImpl implements MedicalService {
                 result.setCommitFinish(true);
                 stepCallback.apply(result);
                 LogUtil.log("commit finish code -> {} msg -> {} data -> {}", mResponse.getCode(), mResponse.getMsg(), mResponse.getData());
-                LogUtil.logView("Success!! {}", commitSuccess.toString());
+                stepCallback = null;
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

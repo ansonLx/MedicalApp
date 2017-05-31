@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private TargetDate targetDate;
 
     private String lastVerifyCode;
+    private Consumer<HandleResult> commitCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +90,22 @@ public class MainActivity extends AppCompatActivity {
         });
         bindService(bindIntent, medicalServiceConnection, Context.BIND_AUTO_CREATE);
 
-
+        commitCallback = new Consumer<HandleResult>() {
+            @Override
+            public void apply(HandleResult handleResult) {
+                Message message = handler.obtainMessage();
+                Object[] os = new Object[2];
+                os[0] = new Consumer<HandleResult>() {
+                    @Override
+                    public void apply(HandleResult result) {
+                        logToLogView(result.getMessage());
+                    }
+                };
+                os[1] = handleResult;
+                message.obj = os;
+                handler.sendMessage(message);
+            }
+        };
     }
 
     @Override
@@ -135,22 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void start(View view) {
         if (targetDate != null) {
-            medicalService.start(targetDate, new Consumer<HandleResult>() {
-                @Override
-                public void apply(HandleResult handleResult) {
-                    Message message = handler.obtainMessage();
-                    Object[] os = new Object[2];
-                    os[0] = new Consumer<HandleResult>() {
-                        @Override
-                        public void apply(HandleResult result) {
-                            logToLogView(result.getMessage());
-                        }
-                    };
-                    os[1] = handleResult;
-                    message.obj = os;
-                    handler.sendMessage(message);
-                }
-            });
+            medicalService.start(targetDate, commitCallback);
         }
     }
 
@@ -323,19 +324,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void receiveVerifyCode(String verifyCode) {
         logToLogView("receive verify code -> " + verifyCode);
-        medicalService.submitVerifyCode(verifyCode, new Consumer<HandleResult>() {
-            @Override
-            public void apply(HandleResult result) {
-                Message logViewMsg = handler.obtainMessage();
-                logViewMsg.obj = new Object[]{new Consumer<HandleResult>() {
-                    @Override
-                    public void apply(HandleResult result) {
-                        logToLogView(result.getMessage());
-                    }
-                }, result};
-                handler.sendMessage(logViewMsg);
-            }
-        });
+        medicalService.submitVerifyCode(verifyCode);
     }
 
     private void readUnread114Sms() {

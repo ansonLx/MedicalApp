@@ -60,10 +60,7 @@ public class MedicalServiceHandler extends Handler {
                 break;
             }
             case CommitVerifyCode: {
-                Object[] os = (Object[]) msg.obj;
-                String verifyCode = (String) os[0];
-                Consumer<HandleResult> stepCallback = (Consumer<HandleResult>) os[1];
-                medicalService.submit(verifyCode, stepCallback);
+                medicalService.submit((String) msg.obj);
                 break;
             }
             default:
